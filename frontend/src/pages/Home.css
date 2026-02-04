@@ -20,6 +20,30 @@
   align-items: center;
 }
 
+/* small floating search button used to capture search input and open overlay */
+.home-search-btn {
+  position: fixed;
+  right: 18px;
+  top: 82px;
+  z-index: 900;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.08);
+  cursor: pointer;
+}
+
+.home-search-btn:hover { transform: translateY(-2px); }
+
+@media (max-width: 768px) {
+  .home-search-btn { top: 70px; right: 12px; }
+}
+
 .category-chip {
   flex: 0 0 auto;
   white-space: nowrap;
@@ -170,7 +194,117 @@
   font-size: 0.85rem;
 }
 
-.session-info {
+/* Modern media-card variant to match the attached design */
+.session-card.modern {
+  background: linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.35));
+  border: none;
+}
+
+.session-card.modern .card-thumbnail-wrapper {
+  border-radius: 12px;
+  height: 220px;
+  background: var(--thumbnail-bg);
+}
+
+/* decorative progress bar at the bottom of the thumbnail */
+.session-card.modern .card-thumbnail-wrapper::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #ff3b30, #ff6b6b);
+  width: var(--progress, 26%);
+  transition: width 400ms cubic-bezier(.2,.9,.2,1);
+}
+
+.menu-dots {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  color: #fff;
+  opacity: 0.95;
+  font-size: 18px;
+  line-height: 1;
+  z-index: 5;
+}
+
+.visualizer {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 110px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+}
+
+.visualizer .ring {
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(59,130,246,0.9), rgba(99,102,241,0.35), rgba(59,130,246,0.9));
+  filter: blur(6px);
+  transform: rotate(0deg);
+  animation: ringRotate 6s linear infinite;
+  opacity: 0.95;
+}
+
+.center-timer {
+  position: relative;
+  z-index: 6;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  background: rgba(0,0,0,0.45);
+  padding: 6px 10px;
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.5);
+}
+
+@keyframes ringRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* hexagon duration badge */
+.duration-hex {
+  display: inline-block;
+  padding: 6px 8px;
+  color: #fff;
+  font-weight: 700;
+  background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.45));
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  font-size: 0.85rem;
+  margin-right: 0.25rem;
+  box-shadow: 0 8px 20px rgba(2,6,23,0.5);
+}
+
+.session-card.modern .session-info {
+  padding: 0.9rem;
+  margin-top: -16px;
+  background: transparent;
+  color: #fff;
+  box-shadow: none;
+}
+
+.session-card.modern .session-title { color: #fff; font-size: 1rem; }
+.session-card.modern .instructor-name { color: rgba(255,255,255,0.7); }
+.session-card.modern .rating { color: rgba(255,255,255,0.85); }
+.session-card.modern .price { color: #ff7b7b; font-weight: 800; }
+
+@media (max-width: 480px) {
+  .visualizer { width: 86px; height: 86px; }
+  .visualizer .ring { width: 86px; height: 86px; }
+  .center-timer { font-size: 0.9rem; padding: 5px 8px; }
+}
+
+.session-card .session-info {
   padding: 1rem;
   gap: 0.75rem;
   display: flex;
@@ -178,6 +312,7 @@
   /* pull the info panel up to overlap the thumbnail slightly and remove visual gap */
   margin-top: -14px;
   background: var(--bg-primary);
+  color: var(--text-primary);
   border-top-left-radius: 0.75rem;
   border-top-right-radius: 0.75rem;
   box-shadow: 0 6px 18px rgba(2,6,23,0.06);
@@ -194,7 +329,7 @@
     height: 160px;
   }
 
-  .session-info {
+  .session-card .session-info {
     padding: 0.75rem;
     gap: 0.5rem;
     margin-top: -10px;
@@ -202,7 +337,7 @@
 }
 
 @media (max-width: 480px) {
-  .session-info {
+  .session-card .session-info {
     padding: 0.75rem;
     gap: 0.5rem;
     margin-top: -10px;

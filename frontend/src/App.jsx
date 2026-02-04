@@ -11,6 +11,8 @@ import Summary from './pages/Summary.jsx';
 import Wallet from './pages/Wallet.jsx';
 import TeacherDashboard from './pages/TeacherDashboard.jsx';
 import CreatorUpload from './pages/CreatorUpload.jsx';
+import SearchResults from './pages/SearchResults.jsx';
+import ChatSearch from './pages/ChatSearch.jsx';
 import './styles/theme.css';
 import './App.css';
 
@@ -108,6 +110,8 @@ function AppContent() {
           
           {/* Catch all - redirect to home or auth */}
           <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/search" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute><ChatSearch /></ProtectedRoute>} />
         </Routes>
       </div>
     </Router>
