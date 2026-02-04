@@ -186,16 +186,21 @@ async def upload(
         "created_at": utc_now_iso(),
     }
 
+    print(f"DEBUG: Attempting to insert/update listing: {lid} with teacher_id {teacher_id}")
     try:
         existing = sb.maybe_single("listings", "*", id=lid)
         if existing:
             # Update existing listing
+            print(f"DEBUG: Updating existing listing {lid}")
             sb.update("listings", listing_data, match={"id": lid})
         else:
             # Create new listing
+            print(f"DEBUG: Inserting new listing {lid}")
             sb.insert("listings", listing_data)
+        print(f"DEBUG: Successfully handled listing {lid}")
     except Exception as e:
-        raise http_error(500, f"Failed to save listing to database: {str(e)}", code="DB_ERROR") from e
+        print(f"ERROR: Failed to insert/update listing {lid}: {e}")
+        raise http_error(500, f"Database error: {str(e)}", code="DB_ERROR")
 
     # Return first video URL for backward compatibility (or all URLs joined)
     preview_url = video_urls[0] if video_urls else ""

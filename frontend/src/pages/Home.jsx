@@ -80,7 +80,7 @@ export default function Home({ selectedCategory = 'All', searchQuery = '', onCat
       </div>
 
       {/* Small search icon: navigate to search page */}
-      <button
+      {/* <button
         className="home-search-btn"
         aria-label="Open search"
         onClick={() => {
@@ -95,7 +95,7 @@ export default function Home({ selectedCategory = 'All', searchQuery = '', onCat
         }}
       >
         <Search size={18} />
-      </button>
+      </button> */}
       <div className="sessions-grid">
         {sessions.map((session) => (
           <Link key={session.id} to={`/session/${session.id}`} className="session-link">

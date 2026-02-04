@@ -1,10 +1,13 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Search, Grid, User, LogOut, Upload, Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '../features/auth/AuthProvider.jsx';
 import './Sidebar.css';
 
 export default function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
   const menuItems = [
@@ -21,6 +24,12 @@ export default function Sidebar() {
 
   const closeSidebar = () => {
     setIsOpen(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+    closeSidebar();
   };
 
   return (
@@ -57,7 +66,7 @@ export default function Sidebar() {
         </nav>
 
         <div className="sidebar-footer">
-          <button className="logout-btn">
+          <button className="logout-btn" onClick={handleLogout}>
             <LogOut size={20} />
             <span>Logout</span>
           </button>
