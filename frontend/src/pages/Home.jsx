@@ -29,11 +29,6 @@ export default function Home() {
 
   return (
     <div className="home-page">
-      <h1>Welcome to Murph</h1>
-      <p className="subtitle">
-        Learn at your own pace. Pay only for what you use. Get reviewed by AI.
-      </p>
-
       <div className="search-section">
         <div className="search-bar">
           <Search size={20} />
@@ -61,20 +56,28 @@ export default function Home() {
 
       <div className="sessions-grid">
         {sessions.map((session) => (
-          <Link key={session.id} to={`/session/${session.id}`}>
+          <Link key={session.id} to={`/session/${session.id}`} className="session-link">
             <div className="session-card">
-              <img src={session.thumbnail} alt={session.title} />
-              <div className="session-info">
-                <h3>{session.title}</h3>
-                <p className="instructor">{session.instructor.name}</p>
-                <div className="session-meta">
-                  <span className="rating">⭐ {session.rating}</span>
-                  <span className="duration">{session.duration} min</span>
-                  <span className="price">${session.pricePerMinute}/min</span>
+              <div className="card-thumbnail-wrapper">
+                <img src={session.thumbnail} alt={session.title} className="card-thumbnail" />
+                <div className="card-overlay">
+                  <span className="duration-badge">{session.duration} min</span>
                 </div>
-                <div className="tags">
+              </div>
+              <div className="session-info">
+                <h3 className="session-title">{session.title}</h3>
+                <p className="instructor-name">{session.instructor.name}</p>
+                <div className="session-stats">
+                  <div className="rating-section">
+                    <span className="rating">⭐ {session.rating}</span>
+                  </div>
+                  <div className="price-section">
+                    <span className="price">${session.pricePerMinute}/min</span>
+                  </div>
+                </div>
+                <div className="tags-section">
                   {session.tags.map((tag) => (
-                    <span key={tag} className="tag">
+                    <span key={tag} className="tag-badge">
                       {tag}
                     </span>
                   ))}
