@@ -41,12 +41,14 @@ def register(req: RegisterRequest) -> AuthResponse:
     try:
         res = sb.client.auth.sign_up({"email": req.email, "password": req.password})
     except Exception as exc:
-        raise http_error(400, f"Registration failed: {exc}", code="REGISTER_FAILED")
+        import traceback
+        traceback.print_exc()  # Log full stack trace
+        raise http_error(400, f"Registration failed: {str(exc)}", code="REGISTER_FAILED")
 
     user = getattr(res, "user", None)
     session = getattr(res, "session", None)
     if not user:
-        raise http_error(400, "Registration failed", code="REGISTER_FAILED")
+        raise http_error(400, "Registration failed: No user returned", code="REGISTER_FAILED")
 
     profile: dict[str, Any] = {
         "id": user.id,
@@ -74,13 +76,16 @@ def login(req: LoginRequest) -> AuthResponse:
     sb = get_supabase()
     try:
         res = sb.client.auth.sign_in_with_password({"email": req.email, "password": req.password})
-    except Exception:
-        raise http_error(401, "Invalid credentials", code="LOGIN_FAILED")
+    except Exception as exc:
+        import traceback
+        traceback.print_exc()
+        print(f"Login error: {str(exc)}")
+        raise http_error(401, f"Login failed: {str(exc)}", code="LOGIN_FAILED")
 
     session = getattr(res, "session", None)
     user = getattr(res, "user", None)
     if not session or not user:
-        raise http_error(401, "Invalid credentials", code="LOGIN_FAILED")
+        raise http_error(401, "Invalid credentials or user not confirmed", code="LOGIN_FAILED")
 
     profile = sb.maybe_single("users", "*", id=user.id)
     role = (profile or {}).get("role") or "student"

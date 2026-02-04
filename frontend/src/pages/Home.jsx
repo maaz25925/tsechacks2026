@@ -1,16 +1,44 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { mockSessions, mockCategories } from '../lib/dataMocks';
 import './Home.css';
+
+import { Search } from 'lucide-react';
 
 const PLACEHOLDER_SVG = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='800'><rect width='100%' height='100%' fill='%23203134'/><text x='50%' y='50%' fill='%23ffffff' font-size='28' text-anchor='middle' dominant-baseline='middle'>No image</text></svg>`;
 
 export default function Home({ selectedCategory = 'All', searchQuery = '', onCategoryChange }) {
   const [activeCategory, setActiveCategory] = useState(selectedCategory);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setActiveCategory(selectedCategory);
   }, [selectedCategory]);
+
+  useEffect(() => {
+    // listen for Enter on .search-input and navigate to /search
+    const handler = (e) => {
+      if (e.key === 'Enter') {
+        const active = document.activeElement;
+        if (active && active.classList && active.classList.contains('search-input')) {
+          const v = (active.value || '').trim();
+          if (v) navigate(`/search?q=${encodeURIComponent(v)}`);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [navigate]);
+
+  useEffect(() => {
+    const onAppSearch = (e) => {
+      const q = (e?.detail || '').toString().trim();
+      if (q) navigate(`/search?q=${encodeURIComponent(q)}`);
+    };
+    window.addEventListener('app:search', onAppSearch);
+    return () => window.removeEventListener('app:search', onAppSearch);
+  }, [navigate]);
 
   const handleCategoryClick = (cat) => {
     setActiveCategory(cat);
@@ -50,6 +78,24 @@ export default function Home({ selectedCategory = 'All', searchQuery = '', onCat
           </button>
         ))}
       </div>
+
+      {/* Small search icon: navigate to search page */}
+      <button
+        className="home-search-btn"
+        aria-label="Open search"
+        onClick={() => {
+          const inp = document.querySelector('.search-input');
+          if (inp) {
+            const v = (inp.value || '').trim();
+            if (v) navigate(`/search?q=${encodeURIComponent(v)}`);
+            else inp.focus();
+          } else {
+            navigate('/search');
+          }
+        }}
+      >
+        <Search size={18} />
+      </button>
       <div className="sessions-grid">
         {sessions.map((session) => (
           <Link key={session.id} to={`/session/${session.id}`} className="session-link">
