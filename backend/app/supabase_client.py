@@ -86,6 +86,41 @@ class SupabaseService:
         public_url = public.get("publicUrl") if isinstance(public, dict) else public
         return {"path": path, "public_url": public_url, "bucket": self.videos_bucket}
 
+    def upload_file(
+        self, *, path: str, file_bytes: bytes, content_type: str, bucket_name: str | None = None
+    ) -> dict[str, Any]:
+        """
+        Generic file upload to Supabase Storage.
+        Uses videos bucket by default, but can specify another bucket.
+
+        Returns: { "path": "...", "public_url": "...", "bucket": "..." }
+        """
+        bucket_name = bucket_name or self.videos_bucket
+        bucket = self.client.storage.from_(bucket_name)
+        bucket.upload(
+            path=path,
+            file=file_bytes,
+            file_options={"content-type": content_type, "upsert": "true"},
+        )
+        public = bucket.get_public_url(path)
+        public_url = public.get("publicUrl") if isinstance(public, dict) else public
+        return {"path": path, "public_url": public_url, "bucket": bucket_name}
+
+    def get_signed_url(self, *, path: str, expires_in: int = 3600, bucket_name: str | None = None) -> str:
+        """
+        Generate a signed URL for private bucket access.
+        expires_in: seconds (default 1 hour)
+
+        Returns signed URL string that expires after expires_in seconds.
+        """
+        bucket_name = bucket_name or self.videos_bucket
+        bucket = self.client.storage.from_(bucket_name)
+        signed = bucket.create_signed_url(path=path, expires_in=expires_in)
+        # supabase-py may return dict or string
+        if isinstance(signed, dict):
+            return signed.get("signedURL") or signed.get("signedUrl") or str(signed)
+        return str(signed)
+
 
 _svc: SupabaseService | None = None
 

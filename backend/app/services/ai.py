@@ -147,6 +147,108 @@ class AIService:
                 bonus = 5
         return score, bonus
 
+    def generate_transcription(
+        self, *, description: str, video_metadata: dict[str, Any] | None = None
+    ) -> str:
+        """
+        Generate a mock transcription text from course description and metadata.
+        Used when teacher doesn't provide a transcription file.
+
+        Returns: Plain text transcription string.
+        """
+        metadata_str = ""
+        if video_metadata:
+            duration = video_metadata.get("duration_min")
+            if duration:
+                metadata_str = f"Video duration: approximately {duration} minutes. "
+            category = video_metadata.get("category")
+            if category:
+                metadata_str += f"Category: {category}. "
+
+        system = (
+            "You are a transcription generator for educational video courses. "
+            "Create a realistic, structured transcription that matches the course description. "
+            "Include natural speech patterns, section markers, and key points."
+        )
+        user = (
+            f"Course description: {description}\n"
+            f"{metadata_str}\n\n"
+            "Generate a realistic transcription text (2-5 paragraphs) that would match this course content. "
+            "Include natural pauses, section transitions, and key learning points mentioned in the description."
+        )
+
+        last_err: Exception | None = None
+        for client, model in [
+            (self._groq, self._model),
+            (self._openai, self._fallback_model),
+        ]:
+            if client is None:
+                continue
+            try:
+                resp = client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": user},
+                    ],
+                    temperature=0.7,
+                )
+                content = (resp.choices[0].message.content or "").strip()
+                if content:
+                    return content
+            except Exception as e:  # noqa: BLE001
+                last_err = e
+                continue
+
+        # Fallback: simple template if AI fails
+        return (
+            f"[Transcription for: {description}]\n\n"
+            "Welcome to this course. In this lesson, we'll cover the key concepts "
+            "outlined in the course description. Let's begin by understanding the fundamentals...\n\n"
+            "As we progress, you'll learn practical applications and techniques. "
+            "Remember to practice and review the material regularly.\n\n"
+            "Thank you for watching. If you have questions, please refer to the course materials."
+        )
+
+    def generate_course_outcomes(
+        self, *, description: str, transcription: str | None = None
+    ) -> list[str]:
+        """
+        Generate course outcomes (learning objectives) as a JSON list of strings.
+        Analyzes description + transcription (if available) to extract key learning goals.
+
+        Returns: List of outcome strings, e.g., ["Learn basics of X", "Understand Y", ...]
+        """
+        transcription_text = transcription or "No transcription available."
+        system = (
+            "You are an educational content analyzer. "
+            "Extract 3-5 clear learning outcomes from the course description and transcription. "
+            "Each outcome should be a concise, actionable statement starting with a verb (Learn, Understand, Master, etc.)."
+        )
+        user = (
+            f"Course description: {description}\n\n"
+            f"Transcription (if available): {transcription_text}\n\n"
+            "Generate 3-5 learning outcomes as a JSON array of strings. "
+            "Example: [\"Learn the fundamentals of X\", \"Understand how to Y\", \"Master Z techniques\"]"
+        )
+        schema_hint = '{ "outcomes": ["...", "..."] }'
+
+        try:
+            data = self._chat_json(system=system, user=user, schema_hint=schema_hint)
+            outcomes = data.get("outcomes") or data.get("course_outcomes") or []
+            if isinstance(outcomes, list):
+                return [str(o) for o in outcomes if o][:5]  # Limit to 5
+        except Exception:
+            pass
+
+        # Fallback: simple extraction from description
+        fallback = [
+            f"Understand key concepts from {description[:50]}...",
+            "Apply learned techniques in practical scenarios",
+            "Master the fundamentals covered in this course",
+        ]
+        return fallback[:3]
+
     # ---------- Time-series utilities (ARIMA) ----------
     def _build_series(
         self,

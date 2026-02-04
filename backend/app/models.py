@@ -56,6 +56,12 @@ class Listing(Base):
     status: Mapped[ListingStatus] = mapped_column(String)
     video_urls: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # New fields for enhanced upload flow
+    category: Mapped[str | None] = mapped_column(String, nullable=True)
+    visibility: Mapped[str | None] = mapped_column(String, nullable=True)  # "draft", "public", "private"
+    base_price: Mapped[float | None] = mapped_column(Float, nullable=True)
+    transcription_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    course_outcomes: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
 
 
 class Session(Base):

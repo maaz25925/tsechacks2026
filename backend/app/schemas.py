@@ -116,3 +116,18 @@ class CreatorUploadResponse(BaseModel):
     uploaded_url: str
     storage_path: str
 
+
+class CourseDetailResponse(BaseModel):
+    """
+    Response schema for GET /discovery/listings/{listing_id}
+    Returns course detail with reviews rating and all metadata.
+    """
+    title: str
+    description: str
+    category: str
+    video_url: str | list[str]  # Single URL or array for multiple videos
+    thumbnail: str
+    reviews_rating: float | None  # Average rating from reviews table
+    course_outcomes: list[str] | None  # AI-generated learning outcomes
+    transcription: str | None  # Transcription text content or URL
+
