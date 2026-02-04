@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Sidebar from './components/Sidebar.jsx';
+import { ThemeProvider } from './features/theme/ThemeProvider.jsx';
+import Layout from './components/Layout.jsx';
 import Home from './pages/Home.jsx';
 import Discover from './pages/Discover.jsx';
 import SessionDetail from './pages/SessionDetail.jsx';
@@ -8,14 +9,14 @@ import Summary from './pages/Summary.jsx';
 import Wallet from './pages/Wallet.jsx';
 import TeacherDashboard from './pages/TeacherDashboard.jsx';
 import CreatorUpload from './pages/CreatorUpload.jsx';
+import './styles/theme.css';
 import './App.css';
 
-function App() {
+function AppContent() {
   return (
     <Router>
-      <div className="flex min-h-screen bg-white dark:bg-slate-950">
-        <Sidebar />
-        <main className="flex-1 ml-64 p-6">
+      <div className="app-wrapper">
+        <Layout>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/discover" element={<Discover />} />
@@ -26,9 +27,17 @@ function App() {
             <Route path="/dashboard" element={<TeacherDashboard />} />
             <Route path="/upload" element={<CreatorUpload />} />
           </Routes>
-        </main>
+        </Layout>
       </div>
     </Router>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 

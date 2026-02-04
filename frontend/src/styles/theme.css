@@ -1,0 +1,102 @@
+/* Theme System - Light Mode (Default) */
+:root,
+[data-theme="light"] {
+  /* Primary Colors */
+  --primary: #3B82F6;
+  --secondary: #8B5CF6;
+  --accent: #10B981;
+
+  /* Light Mode */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F9FAFB;
+  --text-primary: #1F2937;
+  --text-secondary: #6B7280;
+  --border-color: #E5E7EB;
+
+  /* Shades */
+  --primary-light: #DBEAFE;
+  --primary-dark: #1E40AF;
+  --secondary-light: #EDE9FE;
+  --secondary-dark: #6D28D9;
+  --accent-light: #DCFCE7;
+  --accent-dark: #047857;
+}
+
+/* Dark Mode */
+[data-theme="dark"] {
+  /* Primary Colors */
+  --primary: #3B82F6;
+  --secondary: #8B5CF6;
+  --accent: #10B981;
+
+  /* Dark Mode */
+  --bg-primary: #0F172A;
+  --bg-secondary: #1E293B;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --border-color: #334155;
+
+  /* Shades */
+  --primary-light: #1E40AF;
+  --primary-dark: #DBEAFE;
+  --secondary-light: #6D28D9;
+  --secondary-dark: #EDE9FE;
+  --accent-light: #047857;
+  --accent-dark: #DCFCE7;
+}
+
+/* Global Styles */
+* {
+  color: var(--text-primary);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Utility Classes */
+.bg-primary {
+  background-color: var(--bg-primary);
+}
+
+.bg-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.border-primary {
+  border-color: var(--border-color);
+}
+
+.color-primary {
+  color: var(--primary);
+}
+
+.color-secondary {
+  color: var(--secondary);
+}
+
+.color-accent {
+  color: var(--accent);
+}
+
+.bg-color-primary {
+  background-color: var(--primary);
+}
+
+.bg-color-secondary {
+  background-color: var(--secondary);
+}
+
+.bg-color-accent {
+  background-color: var(--accent);
+}
