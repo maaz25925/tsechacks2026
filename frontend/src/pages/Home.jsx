@@ -45,7 +45,15 @@ export default function Home({ selectedCategory = 'All', searchQuery = '', onCat
     if (onCategoryChange) onCategoryChange(cat);
   };
   const sessions = useMemo(() => {
-    let filtered = mockSessions;
+    let filtered = [...mockSessions];
+
+    // DEV: Override first card with real listing ID for testing
+    if (filtered.length > 0) {
+      filtered[0] = {
+        ...filtered[0],
+        id: "listing_2e51bac18dc64cbeb3399c7b049a1e93"
+      };
+    }
 
     if (activeCategory && activeCategory !== 'All') {
       filtered = filtered.filter((s) => s.category === activeCategory);

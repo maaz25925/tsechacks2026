@@ -2,14 +2,22 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Clock, User, Star, BookOpen } from 'lucide-react';
 import { mockSessions } from '../lib/dataMocks';
+import { discoveryService } from '../features/discovery/discoveryService';
 import WalletStatus from '../components/WalletStatus';
 import './SessionDetail.css';
+
+const PLACEHOLDER_AVATAR = "https://api.dicebear.com/7.x/avataaars/svg?seed=Instructor";
 
 export default function SessionDetail() {
   const [entered, setEntered] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
-  const session = mockSessions.find((s) => s.id === id);
+
+  // Try to find in mocks first
+  const mockSession = mockSessions.find((s) => s.id === id);
+  const [session, setSession] = useState(mockSession || null);
+  const [loading, setLoading] = useState(id?.startsWith('listing_')); // Only load if it's a real ID
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     // animate hero image on mount
@@ -17,19 +25,69 @@ export default function SessionDetail() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  if (!session) {
-    return <div>Session not found</div>;
-  }
+  useEffect(() => {
+    // If it's a real listing ID, fetch from API
+    if (id?.startsWith('listing_')) {
+      const fetchSession = async () => {
+        try {
+          setLoading(true);
+          const data = await discoveryService.getListingDetail(id);
+
+          setSession({
+            id: id,
+            title: data.title,
+            description: data.description,
+            thumbnail: data.thumbnail,
+            instructor: {
+              name: data.teacher_name || 'Instructor',
+              avatar: PLACEHOLDER_AVATAR
+            },
+            duration: data.total_duration_min,
+            rating: data.reviews_rating || 'New',
+            reviews: 0,
+            pricePerMinute: data.price_per_min,
+            learningObjectives: data.course_outcomes || [],
+            videoUrl: data.video_url,
+            transcription: data.transcription
+          });
+        } catch (err) {
+          console.error('Failed to fetch session details:', err);
+          setError('Failed to load session details');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchSession();
+    }
+  }, [id]);
+
+  if (loading) return <div className="session-detail-loading">Loading details...</div>;
+  if (error) return <div className="session-detail-error">{error}</div>;
+  if (!session) return <div className="session-detail-not-found">Session not found</div>;
 
   const estimatedCost = (session.duration * session.pricePerMinute).toFixed(2);
+  const videoSrc = session.videoUrl
+    ? (Array.isArray(session.videoUrl) ? session.videoUrl[0] : session.videoUrl)
+    : null;
 
   return (
     <div className="session-detail">
-      <img
-        src={session.thumbnail}
-        alt={session.title}
-        className={`hero-image ${entered ? 'entered' : ''}`}
-      />
+      {videoSrc ? (
+        <video
+          src={videoSrc}
+          className={`hero-video ${entered ? 'entered' : ''}`}
+          controls
+          poster={session.thumbnail}
+          playsInline
+        />
+      ) : (
+        <img
+          src={session.thumbnail}
+          alt={session.title}
+          className={`hero-image ${entered ? 'entered' : ''}`}
+        />
+      )}
 
       <div className="content">
         <h1>{session.title}</h1>
@@ -86,7 +144,7 @@ export default function SessionDetail() {
           </ul>
         </div>
 
-        <WalletStatus balance={2500} onConnect={() => {}} />
+        <WalletStatus balance={2500} onConnect={() => { }} />
 
         <div className="action-section">
           <div className="cost-estimate">
