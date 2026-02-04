@@ -135,6 +135,9 @@ class CourseDetailResponse(BaseModel):
     reviews_rating: float | None  # Average rating from reviews table
     course_outcomes: list[str] | None  # AI-generated learning outcomes
     transcription: str | None  # Transcription text content or URL
+    base_price: float | None = None  # Base price of the course
+    total_duration_min: int | None = None  # Total duration in minutes
+    price_per_min: float | None = None  # Price per minute
 
 
 # ============ User CRUD Schemas ============

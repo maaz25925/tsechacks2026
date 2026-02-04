@@ -281,5 +281,8 @@ def get_course_detail(listing_id: str) -> CourseDetailResponse:
         reviews_rating=reviews_rating,
         course_outcomes=course_outcomes,
         transcription=transcription,
+        base_price=listing.get("base_price"),
+        total_duration_min=listing.get("total_duration_min"),
+        price_per_min=listing.get("price_per_min"),
     )
 
