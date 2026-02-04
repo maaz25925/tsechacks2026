@@ -1,0 +1,52 @@
+.active-session {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.video-player-container {
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  position: relative;
+  background: #000;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.video-player-container > div {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.session-info {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+}
+
+.session-info h2 {
+  margin-bottom: 0.5rem;
+}
+
+.session-info p {
+  color: #6b7280;
+  margin: 0.5rem 0;
+}
+
+.progress-info {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f0f9ff;
+  border-radius: 0.5rem;
+  border-left: 4px solid #3b82f6;
+}
+
+.progress-info p {
+  color: #1e40af;
+  margin: 0;
+}
