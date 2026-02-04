@@ -220,3 +220,68 @@ def end(req: SessionEndRequest) -> SessionEndBreakdown:
         refund_transaction_id=refund_tx.finternet_tx_id,
     )
 
+
+@router.get("/student/{student_id}")
+def sessions_for_student(student_id: str) -> dict:
+    """
+    Simple student dashboard: list recent sessions.
+    """
+    sb = get_supabase()
+    rows = (
+        sb.client.table("sessions")
+        .select("*")
+        .eq("student_id", student_id)
+        .order("created_at", desc=True)
+        .limit(50)
+        .execute()
+        .data
+        or []
+    )
+    return {"student_id": student_id, "sessions": rows}
+
+
+@router.get("/teacher/{teacher_id}")
+def sessions_for_teacher(teacher_id: str) -> dict:
+    sb = get_supabase()
+    rows = (
+        sb.client.table("sessions")
+        .select("*")
+        .eq("teacher_id", teacher_id)
+        .order("created_at", desc=True)
+        .limit(50)
+        .execute()
+        .data
+        or []
+    )
+    return {"teacher_id": teacher_id, "sessions": rows}
+
+
+@router.get("/{session_id}/videos")
+def session_videos(session_id: str) -> dict:
+    """
+    Return listing video URLs only while session is active.
+
+    For MVP we reuse stored public URLs. A stricter version could
+    switch to short-lived signed URLs using storage paths.
+    """
+    sb = get_supabase()
+    session = sb.maybe_single("sessions", "*", id=session_id)
+    if not session:
+        raise http_error(404, "Session not found", code="SESSION_NOT_FOUND")
+    if session.get("status") != "active":
+        raise http_error(403, "Session is not active", code="SESSION_NOT_ACTIVE")
+
+    listing = sb.maybe_single("listings", "*", id=session["listing_id"])
+    if not listing:
+        raise http_error(404, "Listing not found", code="LISTING_NOT_FOUND")
+
+    video_urls = listing.get("video_urls") or []
+    if isinstance(video_urls, dict):
+        # tolerate bad data shape
+        video_urls = list(video_urls.values())
+    return {
+        "session_id": session_id,
+        "listing_id": session["listing_id"],
+        "video_urls": video_urls,
+    }
+

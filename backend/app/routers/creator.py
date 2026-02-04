@@ -104,3 +104,22 @@ async def upload(
 
     return CreatorUploadResponse(listing_id=lid, uploaded_url=public_url, storage_path=storage_path)
 
+
+@router.get("/listings/{teacher_id}")
+def teacher_listings(teacher_id: str) -> dict:
+    """
+    Return all listings for a given teacher (for Creator dashboard).
+    """
+    sb = get_supabase()
+    rows = (
+        sb.client.table("listings")
+        .select("*")
+        .eq("teacher_id", teacher_id)
+        .order("created_at", desc=True)
+        .limit(50)
+        .execute()
+        .data
+        or []
+    )
+    return {"teacher_id": teacher_id, "listings": rows}
+

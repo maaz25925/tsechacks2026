@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from app.errors import http_error
 from app.schemas import DiscoverySuggestRequest, DiscoverySuggestResponse, ListingPublic
@@ -64,4 +64,28 @@ def suggest(req: DiscoverySuggestRequest) -> DiscoverySuggestResponse:
         matches=[ListingPublic(**p) for p in picked[:3]],
         reasoning=reasoning,
     )
+
+
+@router.get("/listings", response_model=list[ListingPublic])
+def list_listings(
+    limit: int = Query(20, ge=1, le=100),
+    tag: str | None = None,
+) -> list[ListingPublic]:
+    """
+    Simple listings catalog for frontend browsing (non-AI).
+    """
+    sb = get_supabase()
+    q = (
+        sb.client.table("listings")
+        .select(
+            "id,teacher_id,title,description,type,total_duration_min,reserve_amount,price_per_min,tags,thumbnail_url,status,video_urls"
+        )
+        .eq("status", "published")
+        .limit(limit)
+    )
+    if tag:
+        # naive JSON contains filter on tags
+        q = q.contains("tags", {"tags": [tag]})  # adjust depending on your tag schema
+    rows = q.execute().data or []
+    return [ListingPublic(**r) for r in rows]
 
