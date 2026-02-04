@@ -10,15 +10,15 @@ export const THEME = {
     accent: '#10B981',
   },
   light: {
-    background: '#FFFFFF',
-    surface: '#F9FAFB',
+    background: '#F5F5F7',
+    surface: '#FFFFFF',
     text: '#1F2937',
     textSecondary: '#6B7280',
     border: '#E5E7EB',
   },
   dark: {
-    background: '#0F172A',
-    surface: '#1E293B',
+    background: '#1E3A5F',
+    surface: '#2C5282',
     text: '#F1F5F9',
     textSecondary: '#CBD5E1',
     border: '#334155',
@@ -28,9 +28,9 @@ export const THEME = {
 export const getThemeVariables = (isDark = false) => {
   const mode = isDark ? THEME.dark : THEME.light;
   return {
-    '--primary': THEME.colors.primary,
-    '--secondary': THEME.colors.secondary,
-    '--accent': THEME.colors.accent,
+    '--primary': isDark ? '#60A5FA' : THEME.colors.primary,
+    '--secondary': isDark ? '#A78BFA' : THEME.colors.secondary,
+    '--accent': isDark ? '#34D399' : THEME.colors.accent,
     '--bg-primary': mode.background,
     '--bg-secondary': mode.surface,
     '--text-primary': mode.text,

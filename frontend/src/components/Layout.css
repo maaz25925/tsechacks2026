@@ -4,14 +4,19 @@
   background-color: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
+  --sidebar-width: 256px;
+}
+
+.app-layout.sidebar-closed {
+  --sidebar-width: 0px;
 }
 
 .main-content {
   flex: 1;
-  margin-left: 256px;
-  padding: 2rem 2rem 2rem 2rem;
+  padding: 7rem 2rem 2rem 2rem;
   background-color: var(--bg-primary);
-  margin-top: 0;
+  transition: margin-left 0.3s ease;
+  overflow-y: auto;
 }
 
 @media (max-width: 768px) {
@@ -20,7 +25,7 @@
   }
 
   .main-content {
+    padding: 7rem 1rem 1rem 1rem;
     margin-left: 0;
-    padding: 5.5rem 1rem 1rem 1rem;
   }
 }
