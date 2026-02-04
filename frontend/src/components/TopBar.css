@@ -69,6 +69,21 @@
   color: var(--text-secondary);
 }
 
+/* search button placed at end of input */
+.search-bar .search-btn {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  border-radius: 8px;
+}
+
+.search-bar .search-btn:hover { background: rgba(0,0,0,0.03); color: var(--primary); }
+
 .category-filter {
   display: flex;
   align-items: center;

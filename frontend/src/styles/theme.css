@@ -20,6 +20,8 @@
   --secondary-dark: #6D28D9;
   --accent-light: #DCFCE7;
   --accent-dark: #047857;
+  /* Thumbnail / media background (default follows bg-secondary) */
+  --thumbnail-bg: var(--bg-secondary);
 }
 
 /* Dark Mode */
@@ -43,6 +45,8 @@
   --secondary-dark: #EDE9FE;
   --accent-light: #047857;
   --accent-dark: #DCFCE7;
+  /* Preferred dark thumbnail background */
+  --thumbnail-bg: #08112F;
 }
 
 /* Global Styles */
