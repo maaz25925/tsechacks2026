@@ -8,10 +8,12 @@ from app.config import get_settings
 from app.routers.auth import router as auth_router
 from app.routers.creator import router as creator_router
 from app.routers.discovery import router as discovery_router
+from app.routers.milestones import router as milestones_router
 from app.routers.payments import router as payments_router
 from app.routers.reviews import router as reviews_router
 from app.routers.sessions import router as sessions_router
 from app.routers.teacher import router as teacher_router
+from app.routers.users import router as users_router
 from app.routers.wallet import router as wallet_router
 from app.schemas import HealthResponse
 from app.services.seed import seed_fake_data
@@ -60,6 +62,8 @@ def create_app() -> FastAPI:
     app.include_router(reviews_router)
     app.include_router(creator_router)
     app.include_router(teacher_router)
+    app.include_router(users_router)
+    app.include_router(milestones_router)
 
     @app.on_event("startup")
     def _seed() -> None:

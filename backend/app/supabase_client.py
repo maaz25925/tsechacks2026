@@ -43,7 +43,7 @@ class SupabaseService:
         for k, v in filters.items():
             q = q.eq(k, v)
         res = q.maybe_single().execute()
-        return res.data
+        return res.data if res and res.data else None
 
     def insert(self, table: str, row: dict[str, Any]) -> dict[str, Any]:
         res = self.client.table(table).insert(row).execute()

@@ -12,6 +12,8 @@ ListingStatus = Literal["draft", "published", "flagged"]
 SessionStatus = Literal["pending", "active", "ended", "cancelled"]
 PaymentType = Literal["lock", "settle", "refund"]
 PaymentStatus = Literal["pending", "success", "failed"]
+MilestoneStatus = Literal["pending", "proof_submitted", "completed", "failed"]
+EscrowStatus = Literal["active", "released", "failed"]
 
 
 class HealthResponse(BaseModel):
@@ -131,3 +133,112 @@ class CourseDetailResponse(BaseModel):
     course_outcomes: list[str] | None  # AI-generated learning outcomes
     transcription: str | None  # Transcription text content or URL
 
+
+# ============ User CRUD Schemas ============
+
+class UserCreateRequest(BaseModel):
+    email: str = Field(..., min_length=1, max_length=255)
+    name: str = Field(..., min_length=1, max_length=255)
+    role: Role
+    password: str = Field(..., min_length=6)
+    bio: str | None = Field(default=None, max_length=1000)
+
+
+class UserUpdateRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    bio: str | None = Field(default=None, max_length=1000)
+
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    name: str
+    role: Role
+    bio: str | None = None
+    wallet_address: str | None = None
+    created_at: datetime | None = None
+
+
+class UserListResponse(BaseModel):
+    users: list[UserResponse]
+    total: int
+
+
+# ============ Teacher CRUD Schemas ============
+
+class TeacherProfileResponse(BaseModel):
+    id: str
+    email: str
+    name: str
+    bio: str | None = None
+    wallet_address: str | None = None
+    total_sessions: int
+    base_earned: float
+    bonus_earned: float
+    total_earned: float
+    avg_rating: float | None = None
+    avg_credibility: float | None = None
+    created_at: datetime | None = None
+
+
+class TeacherUpdateRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    bio: str | None = Field(default=None, max_length=1000)
+
+
+# ============ Escrow & Milestone Schemas ============
+
+class PaymentIntentRequest(BaseModel):
+    amount: float = Field(..., gt=0.0)
+    currency: str = Field(default="USD", min_length=1, max_length=10)
+    description: str | None = Field(default=None, max_length=500)
+    metadata: dict[str, Any] | None = None
+
+
+class EscrowResponse(BaseModel):
+    id: str
+    session_id: str
+    finternet_intent_id: str
+    total_amount: float
+    locked_amount: float
+    status: EscrowStatus
+    created_at: datetime | None = None
+
+
+class MilestoneCreateRequest(BaseModel):
+    escrow_id: str
+    session_id: str
+    index: int = Field(..., ge=0)
+    description: str = Field(..., min_length=1, max_length=500)
+    amount: float = Field(..., gt=0.0)
+    percentage: float = Field(..., ge=0.0, le=100.0)
+
+
+class ProofSubmitRequest(BaseModel):
+    video_url: str = Field(..., min_length=1, max_length=1000)
+    notes: str | None = Field(default=None, max_length=500)
+
+
+class MilestoneResponse(BaseModel):
+    id: str
+    escrow_id: str
+    session_id: str
+    index: int
+    description: str
+    amount: float
+    percentage: float
+    status: MilestoneStatus
+    proof_data: dict[str, Any] | None = None
+    created_at: datetime | None = None
+
+
+class MilestoneListResponse(BaseModel):
+    milestones: list[MilestoneResponse]
+    total: int
+
+
+class MilestoneCompleteResponse(BaseModel):
+    milestone_id: str
+    status: MilestoneStatus
+    amount_released: float
+    finternet_tx_id: str | None = None

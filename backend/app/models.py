@@ -26,6 +26,8 @@ ListingStatus = Literal["draft", "published", "flagged"]
 SessionStatus = Literal["pending", "active", "ended", "cancelled"]
 PaymentType = Literal["lock", "settle", "refund"]
 PaymentStatus = Literal["pending", "success", "failed"]
+MilestoneStatus = Literal["pending", "proof_submitted", "completed", "failed"]
+EscrowStatus = Literal["active", "released", "failed"]
 
 
 class User(Base):
@@ -107,3 +109,29 @@ class Payment(Base):
     finternet_tx_id: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+
+class Escrow(Base):
+    __tablename__ = "escrows"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    session_id: Mapped[str] = mapped_column(String)
+    finternet_intent_id: Mapped[str] = mapped_column(String)
+    total_amount: Mapped[float] = mapped_column(Float)
+    locked_amount: Mapped[float] = mapped_column(Float)
+    status: Mapped[EscrowStatus] = mapped_column(String)
+    created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class Milestone(Base):
+    __tablename__ = "milestones"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    escrow_id: Mapped[str] = mapped_column(String)
+    session_id: Mapped[str] = mapped_column(String)
+    index: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(String)
+    amount: Mapped[float] = mapped_column(Float)
+    percentage: Mapped[float] = mapped_column(Float)
+    status: Mapped[MilestoneStatus] = mapped_column(String)
+    proof_data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)  # Contains video_url, notes
+    created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

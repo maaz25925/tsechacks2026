@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -12,6 +13,8 @@ from app.services.finternet import get_finternet
 from app.services.metering import compute_charge_amount, compute_completion_percentage
 from app.supabase_client import get_supabase, utc_now_iso
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
 
@@ -22,6 +25,7 @@ def start(req: SessionStartRequest) -> SessionStartResponse:
     - Ensure student + listing exist
     - Ensure student wallet is connected + sufficient balance
     - Create session (active) + lock funds via Finternet (mock)
+    - Create escrow for milestone-based payouts
     """
     sb = get_supabase()
     s = get_settings()
@@ -93,6 +97,36 @@ def start(req: SessionStartRequest) -> SessionStartResponse:
             "created_at": utc_now_iso(),
         },
     )
+
+    # Create escrow for milestone-based payouts
+    try:
+        payment_intent = gw.create_payment_intent(
+            amount=reserve_amount,
+            currency="USD",
+            description=f"Escrow for session {session_id} - {listing['title']}",
+            metadata={
+                "releaseType": "MILESTONE_LOCKED",
+                "session_id": session_id,
+                "student_id": req.student_id,
+                "teacher_id": listing["teacher_id"],
+            },
+        )
+        
+        escrow_id = f"escrow_{uuid4().hex}"
+        escrow_row = {
+            "id": escrow_id,
+            "session_id": session_id,
+            "finternet_intent_id": payment_intent.get("intent_id", ""),
+            "total_amount": reserve_amount,
+            "locked_amount": reserve_amount,
+            "status": "active",
+            "created_at": utc_now_iso(),
+        }
+        sb.insert("escrows", escrow_row)
+        logger.info(f"Created escrow {escrow_id} for session {session_id}")
+    except Exception as e:
+        logger.warning(f"Failed to create escrow for session {session_id}: {str(e)}")
+        # Continue anyway; escrow is optional for MVP
 
     return SessionStartResponse(
         session_id=session_id,
