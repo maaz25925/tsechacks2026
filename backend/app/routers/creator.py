@@ -82,8 +82,13 @@ async def upload(
             raise http_error(400, f"Empty video file: {vid_file.filename}", code="EMPTY_FILE")
         content_type = vid_file.content_type or "video/mp4"
         storage_path = f"{teacher_dir}/video_{idx}_{vid_file.filename or 'video.mp4'}"
-        uploaded = sb.upload_file(path=storage_path, file_bytes=content, content_type=content_type)
-        video_urls.append(uploaded["public_url"])
+        try:
+            uploaded = sb.upload_file(path=storage_path, file_bytes=content, content_type=content_type)
+            if not uploaded or "public_url" not in uploaded:
+                raise http_error(500, f"Video upload failed: invalid response", code="UPLOAD_FAILED")
+            video_urls.append(uploaded["public_url"])
+        except Exception as e:
+            raise http_error(500, f"Failed to upload video: {str(e)}", code="UPLOAD_FAILED") from e
 
     # Upload thumbnail
     thumb_content = await thumbnail.read()
@@ -91,8 +96,13 @@ async def upload(
         raise http_error(400, "Empty thumbnail file", code="EMPTY_THUMBNAIL")
     thumb_content_type = thumbnail.content_type or "image/jpeg"
     thumb_path = f"{teacher_dir}/thumb_{thumbnail.filename or 'thumbnail.jpg'}"
-    thumb_uploaded = sb.upload_file(path=thumb_path, file_bytes=thumb_content, content_type=thumb_content_type)
-    thumbnail_url = thumb_uploaded["public_url"]
+    try:
+        thumb_uploaded = sb.upload_file(path=thumb_path, file_bytes=thumb_content, content_type=thumb_content_type)
+        if not thumb_uploaded or "public_url" not in thumb_uploaded:
+            raise http_error(500, "Thumbnail upload failed: invalid response", code="UPLOAD_FAILED")
+        thumbnail_url = thumb_uploaded["public_url"]
+    except Exception as e:
+        raise http_error(500, f"Failed to upload thumbnail: {str(e)}", code="UPLOAD_FAILED") from e
 
     # Handle transcription
     transcription_url: str | None = None
@@ -104,8 +114,13 @@ async def upload(
         if trans_content:
             trans_content_type = transcription.content_type or "text/plain"
             trans_path = f"{teacher_dir}/transcription_{transcription.filename or 'transcription.txt'}"
-            trans_uploaded = sb.upload_file(path=trans_path, file_bytes=trans_content, content_type=trans_content_type)
-            transcription_url = trans_uploaded["public_url"]
+            try:
+                trans_uploaded = sb.upload_file(path=trans_path, file_bytes=trans_content, content_type=trans_content_type)
+                if not trans_uploaded or "public_url" not in trans_uploaded:
+                    raise http_error(500, "Transcription upload failed: invalid response", code="UPLOAD_FAILED")
+                transcription_url = trans_uploaded["public_url"]
+            except Exception as e:
+                raise http_error(500, f"Failed to upload transcription: {str(e)}", code="UPLOAD_FAILED") from e
             # Read text for course_outcomes generation
             try:
                 transcription_text = trans_content.decode("utf-8")
@@ -121,8 +136,13 @@ async def upload(
         # Upload generated transcription as .txt file
         trans_bytes = transcription_text.encode("utf-8")
         trans_path = f"{teacher_dir}/transcription_generated.txt"
-        trans_uploaded = sb.upload_file(path=trans_path, file_bytes=trans_bytes, content_type="text/plain")
-        transcription_url = trans_uploaded["public_url"]
+        try:
+            trans_uploaded = sb.upload_file(path=trans_path, file_bytes=trans_bytes, content_type="text/plain")
+            if not trans_uploaded or "public_url" not in trans_uploaded:
+                raise http_error(500, "Generated transcription upload failed: invalid response", code="UPLOAD_FAILED")
+            transcription_url = trans_uploaded["public_url"]
+        except Exception as e:
+            raise http_error(500, f"Failed to upload generated transcription: {str(e)}", code="UPLOAD_FAILED") from e
 
     # Generate course_outcomes using AI
     course_outcomes = ai.generate_course_outcomes(description=description, transcription=transcription_text)

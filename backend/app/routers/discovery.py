@@ -27,8 +27,12 @@ def suggest(req: DiscoverySuggestRequest) -> DiscoverySuggestResponse:
     if not listings:
         raise http_error(404, "No published listings found", code="NO_LISTINGS")
 
+    teacher_names, ratings = _teacher_names_and_ratings_for_listings(sb, listings)
+    for l in listings:
+        l["teacher_name"] = teacher_names.get(l["teacher_id"]) or ""
+        l["reviews_rating"] = ratings.get(l["id"])
+
     ai = get_ai()
-    # We keep the listings payload small for the model.
     slim = [
         {
             "id": l["id"],
@@ -45,7 +49,6 @@ def suggest(req: DiscoverySuggestRequest) -> DiscoverySuggestResponse:
     try:
         ids, reasoning = ai.suggest_listings(query=req.query, listings=slim)
     except Exception:
-        # If AI is not configured, fall back to keyword scoring.
         q = req.query.lower()
         scored = []
         for l in listings:
@@ -66,13 +69,80 @@ def suggest(req: DiscoverySuggestRequest) -> DiscoverySuggestResponse:
     )
 
 
+def _teacher_names_and_ratings_for_listings(
+    sb, listing_rows: list[dict]
+) -> tuple[dict[str, str], dict[str, float]]:
+    """Return (teacher_id -> name, listing_id -> avg_rating)."""
+    if not listing_rows:
+        return {}, {}
+    listing_ids = [r["id"] for r in listing_rows]
+    teacher_ids = list({r["teacher_id"] for r in listing_rows})
+
+    # Teacher names
+    teacher_name_by_id: dict[str, str] = {}
+    if teacher_ids:
+        users = (
+            sb.client.table("users")
+            .select("id,name")
+            .in_("id", teacher_ids)
+            .execute()
+            .data
+            or []
+        )
+        teacher_name_by_id = {u["id"]: (u.get("name") or "") for u in users}
+
+    # Sessions for these listings (ended only)
+    sessions = (
+        sb.client.table("sessions")
+        .select("id,listing_id")
+        .in_("listing_id", listing_ids)
+        .eq("status", "ended")
+        .execute()
+        .data
+        or []
+    )
+    session_by_listing: dict[str, list[str]] = {}
+    for s in sessions:
+        lid = s["listing_id"]
+        if lid not in session_by_listing:
+            session_by_listing[lid] = []
+        session_by_listing[lid].append(s["id"])
+    all_session_ids = [sid for sids in session_by_listing.values() for sid in sids]
+
+    # Reviews: session_id -> rating
+    listing_ratings: dict[str, list[float]] = {lid: [] for lid in listing_ids}
+    if all_session_ids:
+        reviews = (
+            sb.client.table("reviews")
+            .select("session_id,rating")
+            .in_("session_id", all_session_ids)
+            .execute()
+            .data
+            or []
+        )
+        session_to_listing = {}
+        for s in sessions:
+            session_to_listing[s["id"]] = s["listing_id"]
+        for r in reviews:
+            sid = r.get("session_id")
+            lid = session_to_listing.get(sid)
+            if lid is not None and r.get("rating") is not None:
+                listing_ratings.setdefault(lid, []).append(float(r["rating"]))
+
+    rating_by_listing: dict[str, float] = {}
+    for lid, ratings in listing_ratings.items():
+        if ratings:
+            rating_by_listing[lid] = round(sum(ratings) / len(ratings), 2)
+    return teacher_name_by_id, rating_by_listing
+
+
 @router.get("/listings", response_model=list[ListingPublic])
 def list_listings(
     limit: int = Query(20, ge=1, le=100),
     tag: str | None = None,
 ) -> list[ListingPublic]:
     """
-    Simple listings catalog for frontend browsing (non-AI).
+    Listings catalog with teacher name, thumbnail_url, and average rating.
     """
     sb = get_supabase()
     q = (
@@ -84,10 +154,15 @@ def list_listings(
         .limit(limit)
     )
     if tag:
-        # naive JSON contains filter on tags
-        q = q.contains("tags", {"tags": [tag]})  # adjust depending on your tag schema
+        q = q.contains("tags", {"tags": [tag]})
     rows = q.execute().data or []
-    return [ListingPublic(**r) for r in rows]
+    teacher_names, ratings = _teacher_names_and_ratings_for_listings(sb, rows)
+    out = []
+    for r in rows:
+        r["teacher_name"] = teacher_names.get(r["teacher_id"]) or ""
+        r["reviews_rating"] = ratings.get(r["id"])
+        out.append(ListingPublic(**r))
+    return out
 
 
 @router.get("/listings/{listing_id}", response_model=CourseDetailResponse)
@@ -187,21 +262,20 @@ def get_course_detail(listing_id: str) -> CourseDetailResponse:
     transcription_url = listing.get("transcription_url")
     transcription: str | None = None
     if transcription_url:
-        # For MVP, return URL; frontend can fetch text if needed
-        # In production, you might want to fetch and return text directly
         transcription = transcription_url
-        # Optionally: fetch transcription text from storage
-        # try:
-        #     bucket = sb.client.storage.from_(sb.videos_bucket)
-        #     # Extract path from URL and download
-        #     # transcription = bucket.download(path).decode('utf-8')
-        # except Exception:
-        #     pass
+
+    # Teacher name
+    teacher_id = listing.get("teacher_id")
+    teacher_name: str | None = None
+    if teacher_id:
+        teacher_row = sb.maybe_single("users", "name", id=teacher_id)
+        teacher_name = (teacher_row.get("name") or "") if teacher_row else ""
 
     return CourseDetailResponse(
         title=listing.get("title") or "",
         description=listing.get("description") or "",
         category=listing.get("category") or "",
+        teacher_name=teacher_name or "",
         video_url=video_url,
         thumbnail=thumbnail_url,
         reviews_rating=reviews_rating,
