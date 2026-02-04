@@ -1,0 +1,174 @@
+.session-detail {
+  width: 100%;
+}
+
+.hero-image {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.content {
+  max-width: 900px;
+}
+
+.session-detail h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.instructor-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.instructor-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.instructor-label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.instructor-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.detail-item {
+  display: flex;
+  gap: 1rem;
+}
+
+.detail-item svg {
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.detail-item .label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.detail-item .value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.description,
+.learning-objectives {
+  margin-bottom: 2rem;
+}
+
+.description h2,
+.learning-objectives h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.description p {
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.learning-objectives ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.learning-objectives li {
+  padding: 0.75rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.learning-objectives li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #10b981;
+  font-weight: bold;
+}
+
+.action-section {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+.cost-estimate {
+  text-align: center;
+}
+
+.estimate-label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.estimate-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #10b981;
+  margin: 0.25rem 0;
+}
+
+.estimate-note {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.start-btn {
+  flex: 1;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+@media (max-width: 768px) {
+  .details {
+    grid-template-columns: 1fr;
+  }
+
+  .action-section {
+    flex-direction: column;
+  }
+}

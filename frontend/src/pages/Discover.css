@@ -1,0 +1,22 @@
+.discover-page {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.discover-page h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.discover-page .subtitle {
+  color: #6b7280;
+  margin-bottom: 2rem;
+}
+
+.chat-container {
+  flex: 1;
+  max-width: 800px;
+  width: 100%;
+}

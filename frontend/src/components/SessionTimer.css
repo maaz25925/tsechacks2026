@@ -1,0 +1,78 @@
+.session-timer {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #f3e8ff 100%);
+  border-radius: 0.75rem;
+  border: 2px solid #3b82f6;
+}
+
+.timer-display,
+.cost-display {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.timer-icon,
+.cost-icon {
+  color: #3b82f6;
+}
+
+.timer-info,
+.cost-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.timer-value,
+.cost-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.timer-label,
+.cost-label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.timer-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.pause-btn,
+.end-btn {
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pause-btn {
+  background: white;
+  color: #3b82f6;
+  border: 2px solid #3b82f6;
+}
+
+.pause-btn:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.end-btn {
+  background: #ef4444;
+  color: white;
+}
+
+.end-btn:hover {
+  background: #dc2626;
+}
