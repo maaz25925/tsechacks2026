@@ -2,8 +2,8 @@
   width: 100%;
   padding: 0.9rem;
   /* reduced top padding so category chips sit closer to the search bar */
-  padding-top: 3rem;
-  margin-top: 0.5rem;
+  /* padding-top: 0rem; */
+  /* margin-top: 0.5rem; */
   max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
@@ -11,6 +11,7 @@
 
 /* Category bar */
 .category-bar {
+  margin-bottom: 2rem;
   display: flex;
   gap: 0.45rem;
   /* compress vertical spacing to bring chips nearer to the header */
@@ -34,14 +35,19 @@
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  box-shadow: 0 6px 18px rgba(2,6,23,0.08);
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.08);
   cursor: pointer;
 }
 
-.home-search-btn:hover { transform: translateY(-2px); }
+.home-search-btn:hover {
+  transform: translateY(-2px);
+}
 
 @media (max-width: 768px) {
-  .home-search-btn { top: 70px; right: 12px; }
+  .home-search-btn {
+    top: 70px;
+    right: 12px;
+  }
 }
 
 .category-chip {
@@ -56,7 +62,7 @@
   font-size: 0.875rem;
   cursor: pointer;
   transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease, color 140ms ease;
-  box-shadow: 0 1px 4px rgba(2,6,23,0.03);
+  box-shadow: 0 1px 4px rgba(2, 6, 23, 0.03);
 }
 
 .category-chip:hover {
@@ -65,23 +71,23 @@
 
 .category-chip:focus {
   outline: none;
-  box-shadow: 0 4px 12px rgba(59,130,246,0.12);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
 }
 
 .category-chip.active {
   background: var(--bg-secondary);
   color: var(--primary);
-  border-color: rgba(59,130,246,0.18);
-  box-shadow: 0 8px 20px rgba(2,6,23,0.06);
+  border-color: rgba(59, 130, 246, 0.18);
+  box-shadow: 0 8px 20px rgba(2, 6, 23, 0.06);
 }
 
 /* Slight refinement for dark mode where bg-secondary is darker */
 @media (prefers-color-scheme: dark) {
   .category-chip.active {
-    background: rgba(59,130,246,0.06);
+    background: rgba(59, 130, 246, 0.06);
     color: var(--primary);
-    border-color: rgba(59,130,246,0.22);
-    box-shadow: 0 8px 20px rgba(2,6,23,0.08);
+    border-color: rgba(59, 130, 246, 0.22);
+    box-shadow: 0 8px 20px rgba(2, 6, 23, 0.08);
   }
 }
 
@@ -102,10 +108,10 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 1.25rem;
   }
-  
+
   .home-page {
     padding: 0.75rem;
-    padding-top: 4rem;
+    /* padding-top: 4rem; */
   }
 }
 
@@ -114,7 +120,7 @@
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .home-page {
     padding: 0.5rem;
     padding-top: 3.5rem;
@@ -125,10 +131,10 @@
   .sessions-grid {
     gap: 0.75rem;
   }
-  
+
   .home-page {
     padding: 0.25rem;
-    padding-top: 3rem;
+    /* padding-top: 3rem; */
   }
 }
 
@@ -154,8 +160,8 @@
 
 .session-card:hover {
   transform: translateY(-8px) scale(1.01);
-  box-shadow: 0 20px 40px rgba(2,6,23,0.18);
-  border-color: rgba(59,130,246,0.08);
+  box-shadow: 0 20px 40px rgba(2, 6, 23, 0.18);
+  border-color: rgba(59, 130, 246, 0.08);
 }
 
 .card-thumbnail-wrapper {
@@ -167,6 +173,7 @@
   height: 220px;
   display: block;
 }
+
 .card-thumbnail {
   width: 100%;
   height: 100%;
@@ -187,7 +194,7 @@
 }
 
 .duration-badge {
-  background: rgba(2,6,23,0.6);
+  background: rgba(2, 6, 23, 0.6);
   color: #fff;
   padding: 0.25rem 0.5rem;
   border-radius: 0.35rem;
@@ -196,7 +203,7 @@
 
 /* Modern media-card variant to match the attached design */
 .session-card.modern {
-  background: linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.35));
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.35));
   border: none;
 }
 
@@ -216,7 +223,7 @@
   height: 6px;
   background: linear-gradient(90deg, #ff3b30, #ff6b6b);
   width: var(--progress, 26%);
-  transition: width 400ms cubic-bezier(.2,.9,.2,1);
+  transition: width 400ms cubic-bezier(.2, .9, .2, 1);
 }
 
 .menu-dots {
@@ -248,7 +255,7 @@
   width: 110px;
   height: 110px;
   border-radius: 50%;
-  background: conic-gradient(from 0deg, rgba(59,130,246,0.9), rgba(99,102,241,0.35), rgba(59,130,246,0.9));
+  background: conic-gradient(from 0deg, rgba(59, 130, 246, 0.9), rgba(99, 102, 241, 0.35), rgba(59, 130, 246, 0.9));
   filter: blur(6px);
   transform: rotate(0deg);
   animation: ringRotate 6s linear infinite;
@@ -261,15 +268,20 @@
   color: #fff;
   font-weight: 700;
   font-size: 1rem;
-  background: rgba(0,0,0,0.45);
+  background: rgba(0, 0, 0, 0.45);
   padding: 6px 10px;
   border-radius: 999px;
-  box-shadow: 0 6px 18px rgba(2,6,23,0.5);
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.5);
 }
 
 @keyframes ringRotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* hexagon duration badge */
@@ -278,11 +290,11 @@
   padding: 6px 8px;
   color: #fff;
   font-weight: 700;
-  background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.45));
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.45));
   clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
   font-size: 0.85rem;
   margin-right: 0.25rem;
-  box-shadow: 0 8px 20px rgba(2,6,23,0.5);
+  box-shadow: 0 8px 20px rgba(2, 6, 23, 0.5);
 }
 
 .session-card.modern .session-info {
@@ -293,15 +305,39 @@
   box-shadow: none;
 }
 
-.session-card.modern .session-title { color: #fff; font-size: 1rem; }
-.session-card.modern .instructor-name { color: rgba(255,255,255,0.7); }
-.session-card.modern .rating { color: rgba(255,255,255,0.85); }
-.session-card.modern .price { color: #ff7b7b; font-weight: 800; }
+.session-card.modern .session-title {
+  color: #fff;
+  font-size: 1rem;
+}
+
+.session-card.modern .instructor-name {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.session-card.modern .rating {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.session-card.modern .price {
+  color: #ff7b7b;
+  font-weight: 800;
+}
 
 @media (max-width: 480px) {
-  .visualizer { width: 86px; height: 86px; }
-  .visualizer .ring { width: 86px; height: 86px; }
-  .center-timer { font-size: 0.9rem; padding: 5px 8px; }
+  .visualizer {
+    width: 86px;
+    height: 86px;
+  }
+
+  .visualizer .ring {
+    width: 86px;
+    height: 86px;
+  }
+
+  .center-timer {
+    font-size: 0.9rem;
+    padding: 5px 8px;
+  }
 }
 
 .session-card .session-info {
@@ -315,7 +351,7 @@
   color: var(--text-primary);
   border-top-left-radius: 0.75rem;
   border-top-right-radius: 0.75rem;
-  box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
 }
 
 @media (max-width: 768px) {

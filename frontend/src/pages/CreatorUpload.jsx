@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Upload as UploadIcon, Video, Plus, Sparkles, Image as ImageIcon, FileText, X } from 'lucide-react';
+import { useAuth } from '../features/auth/AuthProvider.jsx';
 import './CreatorUpload.css';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
 export default function CreatorUpload() {
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [contentType, setContentType] = useState('single');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -50,9 +56,9 @@ export default function CreatorUpload() {
 
   const handleResourceUpload = (e) => {
     const files = Array.from(e.target.files);
-    setForm((prev) => ({ 
-      ...prev, 
-      additionalResources: [...prev.additionalResources, ...files] 
+    setForm((prev) => ({
+      ...prev,
+      additionalResources: [...prev.additionalResources, ...files]
     }));
   };
 
@@ -116,13 +122,178 @@ export default function CreatorUpload() {
     setSections(sections.filter((_, i) => i !== index));
   };
 
+  const uploadContent = async () => {
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      // Validate required fields
+      if (!form.title || !form.description || !form.category || !form.baseCoursePrice) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      if (!form.thumbnail) {
+        alert('Please upload a thumbnail image');
+        return;
+      }
+
+      // For single video, check if video file exists
+      if (contentType === 'single' && !form.videoFile) {
+        alert('Please upload a video file');
+        return;
+      }
+
+      // For course, check if sections have videos
+      if (contentType === 'course' && sections.length === 0) {
+        alert('Please add at least one section with a video');
+        return;
+      }
+
+      // Create FormData
+      const formData = new FormData();
+
+      // Check file sizes
+      const maxFileSize = 100 * 1024 * 1024; // 100MB
+      if (contentType === 'single' && form.videoFile) {
+        if (form.videoFile.size > maxFileSize) {
+          console.warn(`Video file is large: ${(form.videoFile.size / 1024 / 1024).toFixed(2)}MB`);
+          if (!confirm(`Video file is ${(form.videoFile.size / 1024 / 1024).toFixed(2)}MB. This may take a while to upload. Continue?`)) {
+            return;
+          }
+        }
+      }
+      if (form.thumbnail && form.thumbnail.size > 10 * 1024 * 1024) {
+        alert('Thumbnail file is too large. Please use an image under 10MB.');
+        return;
+      }
+
+      // Add required fields according to FastAPI endpoint
+      formData.append('title', form.title);
+      formData.append('description', form.description);
+      formData.append('category', form.category);
+      formData.append('visibility', form.visibility);
+      formData.append('basePrice', parseFloat(form.baseCoursePrice));
+      formData.append('tags_json', JSON.stringify(form.tags));
+
+      // Add video file(s)
+      if (contentType === 'single' && form.videoFile) {
+        // For single video, append once
+        formData.append('video', form.videoFile);
+      } else if (contentType === 'course') {
+        // For multi-video course, append each section's video with the same field name
+        sections.forEach((section) => {
+          if (section.videoFile) {
+            formData.append('video', section.videoFile);
+          }
+        });
+      }
+
+      // Add thumbnail (required)
+      formData.append('thumbnail', form.thumbnail);
+
+      // Get auth token from localStorage
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        alert('You must be logged in to upload content');
+        return;
+      }
+
+      // Test backend connectivity first
+      try {
+        const healthCheck = await fetch(`${API_BASE_URL}/health`, {
+          method: 'GET',
+        });
+        if (!healthCheck.ok) {
+          throw new Error('Backend health check failed');
+        }
+      } catch (healthError) {
+        alert('Cannot connect to backend server. Please ensure the backend is running on http://localhost:8000');
+        return;
+      }
+
+      // Make API call with timeout
+      setUploadProgress(30);
+
+      // Create abort controller for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 120000); // 2 minute timeout
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/creator/upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            // DO NOT set Content-Type - let browser set it with boundary for multipart/form-data
+          },
+          body: formData,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        setUploadProgress(80);
+
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+        if (!response.ok) {
+          let errorMessage = 'Upload failed';
+          try {
+            const errorData = await response.json();
+            console.error('API Error Response:', errorData);
+            errorMessage = errorData.detail || errorData.error?.message || JSON.stringify(errorData);
+          } catch (e) {
+            errorMessage = `Upload failed with status ${response.status}: ${response.statusText}`;
+          }
+          throw new Error(errorMessage);
+        }
+
+        const result = await response.json();
+        setUploadProgress(100);
+
+        console.log('Upload successful:', result);
+        alert(`Content uploaded successfully! Listing ID: ${result.listing_id}`);
+
+        // Reset form
+        setForm({
+          title: '',
+          description: '',
+          category: 'Web Development',
+          tags: [],
+          videoFile: null,
+          thumbnail: null,
+          baseCoursePrice: '',
+          visibility: 'draft',
+          termsAccepted: false,
+          additionalResources: [],
+        });
+        setSections([]);
+        setCurrentStep(1);
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError') {
+          throw new Error('Upload timeout - file may be too large or connection is slow');
+        }
+        throw fetchError;
+      }
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert(`Upload failed: ${error.message || 'Unknown error occurred'}`);
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (currentStep < 4) {
       nextStep();
     } else {
-      console.log('Uploading:', { contentType, form, sections });
-      alert('Content uploaded successfully!');
+      uploadContent();
     }
   };
 
@@ -135,9 +306,9 @@ export default function CreatorUpload() {
         {/* Stepper */}
         <div className="stepper">
           {steps.map((step, index) => (
-            <>
-              <div key={step.id} className="step-item">
-                <div 
+            <React.Fragment key={step.id}>
+              <div className="step-item">
+                <div
                   className={`step-circle ${currentStep >= step.id ? 'active' : ''} ${currentStep > step.id ? 'completed' : ''}`}
                 >
                   {currentStep > step.id ? '✓' : step.id}
@@ -148,9 +319,9 @@ export default function CreatorUpload() {
                 </div>
               </div>
               {index < steps.length - 1 && (
-                <div key={`line-${step.id}`} className={`step-line ${currentStep > step.id ? 'completed' : ''}`}></div>
+                <div className={`step-line ${currentStep > step.id ? 'completed' : ''}`}></div>
               )}
-            </>
+            </React.Fragment>
           ))}
         </div>
 
@@ -159,7 +330,7 @@ export default function CreatorUpload() {
           {currentStep === 1 && (
             <div className="form-step">
               <h2 className="step-title">Basic Information</h2>
-              
+
               <div className="form-group">
                 <label>Content Type <span className="required-star">*</span></label>
                 <div className="type-toggle">
@@ -436,7 +607,7 @@ export default function CreatorUpload() {
           {currentStep === 4 && (
             <div className="form-step">
               <h2 className="step-title">Review & Submit</h2>
-              
+
               <div className="review-section">
                 <h3>Content Summary</h3>
                 <div className="review-item">
@@ -496,9 +667,12 @@ export default function CreatorUpload() {
                 Next →
               </button>
             ) : (
-              <button type="submit" className="submit-btn">
+              <button type="submit" className="submit-btn" disabled={isUploading}>
                 <UploadIcon size={20} />
-                Submit {contentType === 'single' ? 'Session' : 'Course'}
+                {isUploading
+                  ? `Uploading... ${uploadProgress}%`
+                  : `Submit ${contentType === 'single' ? 'Session' : 'Course'}`
+                }
               </button>
             )}
           </div>
