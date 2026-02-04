@@ -8,7 +8,7 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
 
   const menuItems = [
-    { path: '/', icon: Home, label: 'Home' },
+    { path: '/home', icon: Home, label: 'Home' },
     { path: '/discover', icon: Search, label: 'Discover' },
     { path: '/dashboard', icon: Grid, label: 'Dashboard' },
     { path: '/wallet', icon: User, label: 'Wallet' },
