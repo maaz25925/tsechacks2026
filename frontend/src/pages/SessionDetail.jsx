@@ -1,13 +1,21 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { Clock, User, Star, BookOpen } from 'lucide-react';
 import { mockSessions } from '../lib/dataMocks';
 import WalletStatus from '../components/WalletStatus';
 import './SessionDetail.css';
 
 export default function SessionDetail() {
+  const [entered, setEntered] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
   const session = mockSessions.find((s) => s.id === id);
+
+  useEffect(() => {
+    // animate hero image on mount
+    const raf = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   if (!session) {
     return <div>Session not found</div>;
@@ -17,7 +25,11 @@ export default function SessionDetail() {
 
   return (
     <div className="session-detail">
-      <img src={session.thumbnail} alt={session.title} className="hero-image" />
+      <img
+        src={session.thumbnail}
+        alt={session.title}
+        className={`hero-image ${entered ? 'entered' : ''}`}
+      />
 
       <div className="content">
         <h1>{session.title}</h1>

@@ -29,6 +29,7 @@ def submit(req: ReviewSubmitRequest) -> ReviewSubmitResponse:
     engagement = session.get("engagement_metrics") or {}
 
     ai = get_ai()
+    # Step 1: Groq/OpenAI credibility + bonus
     try:
         credibility, bonus_pct = ai.score_review_credibility(
             rating=req.rating,
@@ -44,6 +45,20 @@ def submit(req: ReviewSubmitRequest) -> ReviewSubmitResponse:
         bonus_pct = 0
         if req.rating >= 4 and credibility >= 0.75:
             bonus_pct = 10
+
+    # Step 2: Temporal anomaly detection with ARIMA over historical ratings
+    try:
+        arima_result = ai.validate_review_with_arima(
+            session_id=req.session_id,
+            rating=req.rating,
+            db=sb,
+        )
+        anomaly = float(arima_result.get("anomaly_score", 0.0))
+    except Exception:
+        anomaly = 0.0
+
+    # Blend: penalize credibility slightly when rating is anomalous
+    credibility = max(0.0, min(1.0, credibility - anomaly * 0.3))
 
     # Bonus applies on amount charged (as a teacher bonus, paid by platform in real life).
     final_amount = float(session.get("final_amount_charged") or 0.0)
