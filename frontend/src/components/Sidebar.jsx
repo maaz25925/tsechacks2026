@@ -1,19 +1,25 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Search, Grid, User, LogOut, Upload } from 'lucide-react';
-import { useState } from 'react';
+import { useAuth } from '../features/auth/AuthProvider.jsx';
 import './Sidebar.css';
 
 export default function Sidebar() {
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(true);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const menuItems = [
-    { path: '/', icon: Home, label: 'Home' },
+    { path: '/home', icon: Home, label: 'Home' },
     { path: '/discover', icon: Search, label: 'Discover' },
     { path: '/dashboard', icon: Grid, label: 'Dashboard' },
     { path: '/wallet', icon: User, label: 'Wallet' },
     { path: '/upload', icon: Upload, label: 'Upload' },
   ];
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <aside className="sidebar">
@@ -38,7 +44,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
-        <button className="logout-btn">
+        <button className="logout-btn" onClick={handleLogout}>
           <LogOut size={20} />
           <span>Logout</span>
         </button>
