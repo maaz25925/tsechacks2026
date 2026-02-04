@@ -3,9 +3,13 @@ from __future__ import annotations
 import json
 from typing import Any
 
+import pandas as pd
 from openai import OpenAI
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.stattools import adfuller
 
 from app.config import get_settings
+from app.supabase_client import SupabaseService
 
 
 class AIService:
@@ -142,6 +146,164 @@ class AIService:
             elif score >= 0.55:
                 bonus = 5
         return score, bonus
+
+    # ---------- Time-series utilities (ARIMA) ----------
+    def _build_series(
+        self,
+        rows: list[dict[str, Any]],
+        value_key: str,
+    ) -> pd.Series:
+        """
+        Build a pandas Series indexed by created_at for ARIMA.
+        """
+        if not rows:
+            return pd.Series(dtype="float64")
+        df = pd.DataFrame(
+            [
+                {
+                    "created_at": r.get("created_at"),
+                    "value": float(r.get(value_key) or 0.0),
+                }
+                for r in rows
+                if r.get("created_at") is not None
+            ]
+        )
+        if df.empty:
+            return pd.Series(dtype="float64")
+        df["created_at"] = pd.to_datetime(df["created_at"], utc=True, errors="coerce")
+        df = df.dropna(subset=["created_at"]).sort_values("created_at")
+        df = df.set_index("created_at")
+        return df["value"]
+
+    def _fit_arima_and_forecast(
+        self,
+        series: pd.Series,
+        steps: int = 3,
+    ) -> list[float]:
+        """
+        Fit a very small ARIMA model and forecast `steps` ahead.
+        Falls back to mean when series is too short or model fails.
+        """
+        if len(series) < 5:
+            mean_val = float(series.mean()) if len(series) else 0.0
+            return [round(mean_val, 3)] * steps
+
+        y = series.astype("float64")
+        d = 0
+        try:
+            adf_p = adfuller(y)[1]
+            if adf_p > 0.05:
+                d = 1
+        except Exception:
+            d = 0
+
+        try:
+            model = ARIMA(y, order=(1, d, 1))
+            fitted = model.fit()
+            forecast = fitted.forecast(steps=steps)
+            return [round(float(v), 3) for v in forecast.tolist()]
+        except Exception:
+            mean_val = float(y.mean()) if len(y) else 0.0
+            return [round(mean_val, 3)] * steps
+
+    def forecast_bonus(
+        self,
+        teacher_id: str,
+        db: SupabaseService,
+        steps: int = 3,
+    ) -> dict[str, Any]:
+        """
+        Forecast future bonus_percentage for a teacher using ARIMA.
+
+        Frontend usage (teacher dashboard):
+        - Show avg_forecast_bonus and small sparkline of next_bonus_predictions.
+        """
+        # Collect all reviews for sessions taught by this teacher
+        sessions = (
+            db.client.table("sessions")
+            .select("id")
+            .eq("teacher_id", teacher_id)
+            .eq("status", "ended")
+            .execute()
+            .data
+            or []
+        )
+        session_ids = [s["id"] for s in sessions]
+        if not session_ids:
+            return {
+                "avg_forecast_bonus": 0.0,
+                "next_bonus_predictions": [0.0] * steps,
+            }
+
+        reviews = (
+            db.client.table("reviews")
+            .select("session_id,bonus_percentage,created_at")
+            .in_("session_id", session_ids)
+            .order("created_at", desc=False)
+            .execute()
+            .data
+            or []
+        )
+        series = self._build_series(reviews, "bonus_percentage")
+        forecast = self._fit_arima_and_forecast(series, steps=steps)
+        avg_forecast = round(sum(forecast) / len(forecast), 3) if forecast else 0.0
+        return {
+            "avg_forecast_bonus": avg_forecast,
+            "next_bonus_predictions": forecast,
+        }
+
+    def validate_review_with_arima(
+        self,
+        session_id: str,
+        rating: int,
+        db: SupabaseService,
+    ) -> dict[str, Any]:
+        """
+        Detect anomalies in ratings using ARIMA on historical ratings per teacher.
+
+        Returns:
+        - anomaly_score: 0..1 (higher = more anomalous)
+        - predicted_rating: float
+        """
+        session = db.maybe_single("sessions", "*", id=session_id)
+        if not session:
+            return {"anomaly_score": 0.0, "predicted_rating": float(rating)}
+
+        teacher_id = session.get("teacher_id")
+        if not teacher_id:
+            return {"anomaly_score": 0.0, "predicted_rating": float(rating)}
+
+        sessions = (
+            db.client.table("sessions")
+            .select("id")
+            .eq("teacher_id", teacher_id)
+            .eq("status", "ended")
+            .execute()
+            .data
+            or []
+        )
+        session_ids = [s["id"] for s in sessions]
+        if not session_ids:
+            return {"anomaly_score": 0.0, "predicted_rating": float(rating)}
+
+        reviews = (
+            db.client.table("reviews")
+            .select("session_id,rating,created_at")
+            .in_("session_id", session_ids)
+            .order("created_at", desc=False)
+            .execute()
+            .data
+            or []
+        )
+        series = self._build_series(reviews, "rating")
+        forecast_list = self._fit_arima_and_forecast(series, steps=1)
+        predicted = forecast_list[0] if forecast_list else float(rating)
+
+        # ratings are 1-5, normalize deviation to 0..1
+        max_range = 4.0
+        deviation = abs(float(rating) - float(predicted))
+        anomaly = max(0.0, min(1.0, deviation / max_range))
+        return {"anomaly_score": round(anomaly, 3), "predicted_rating": round(predicted, 3)}
 
 
 _ai: AIService | None = None
