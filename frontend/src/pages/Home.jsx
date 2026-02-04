@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Search, Filter } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { mockSessions, mockCategories } from '../lib/dataMocks';
 import './Home.css';
 
-export default function Home() {
+export default function Home({ selectedCategory = 'All', searchQuery = '', onSearchChange, onCategoryChange }) {
   const [sessions, setSessions] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     let filtered = mockSessions;
@@ -29,31 +26,6 @@ export default function Home() {
 
   return (
     <div className="home-page">
-      <div className="search-section">
-        <div className="search-bar">
-          <Search size={20} />
-          <input
-            type="text"
-            placeholder="Search courses..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="category-filter">
-        <Filter size={20} />
-        {mockCategories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`category-btn ${selectedCategory === cat ? 'active' : ''}`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
       <div className="sessions-grid">
         {sessions.map((session) => (
           <Link key={session.id} to={`/session/${session.id}`} className="session-link">
