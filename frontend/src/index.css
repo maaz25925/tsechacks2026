@@ -8,6 +8,13 @@
   box-sizing: border-box;
 }
 
+:root {
+  --card-radius: 0.75rem;
+  --card-shadow: 0 6px 18px rgba(2,6,23,0.18);
+  --card-shadow-soft: 0 4px 12px rgba(2,6,23,0.12);
+  --glass: rgba(255,255,255,0.04);
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -43,4 +50,18 @@ button {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+/* Sleek button variants */
+.btn-primary {
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  color: #fff;
+  border: none;
+  box-shadow: var(--card-shadow-soft);
+}
+
+.card {
+  background: var(--bg-secondary);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
 }

@@ -1,4 +1,4 @@
-import { Moon, Sun, Search, Filter } from 'lucide-react';
+import { Moon, Sun, Search } from 'lucide-react';
 import { useTheme } from '../features/theme/ThemeProvider.jsx';
 import { mockCategories } from '../lib/dataMocks';
 import './TopBar.css';
@@ -30,18 +30,7 @@ export default function TopBar({ onSearchChange, onCategoryChange, selectedCateg
         </button>
       </div>
 
-      <div className="category-filter">
-        <Filter size={20} />
-        {mockCategories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => onCategoryChange(cat)}
-            className={`category-btn ${selectedCategory === cat ? 'active' : ''}`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+      {/* Category filter moved to Home page for a single, consistent bar */}
     </div>
   );
 }
