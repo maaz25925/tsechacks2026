@@ -28,6 +28,7 @@ class DiscoverySuggestRequest(BaseModel):
 class ListingPublic(BaseModel):
     id: str
     teacher_id: str
+    teacher_name: str | None = None  # From users.name
     title: str
     description: str | None = None
     type: ListingType
@@ -38,6 +39,7 @@ class ListingPublic(BaseModel):
     thumbnail_url: str | None = None
     status: ListingStatus
     video_urls: list[str] | None = None
+    reviews_rating: float | None = None  # Average rating from reviews
 
 
 class DiscoverySuggestResponse(BaseModel):
@@ -127,6 +129,7 @@ class CourseDetailResponse(BaseModel):
     title: str
     description: str
     category: str
+    teacher_name: str | None = None  # From users.name
     video_url: str | list[str]  # Single URL or array for multiple videos
     thumbnail: str
     reviews_rating: float | None  # Average rating from reviews table
