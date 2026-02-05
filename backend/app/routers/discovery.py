@@ -18,7 +18,7 @@ def suggest(req: DiscoverySuggestRequest) -> DiscoverySuggestResponse:
         .select(
             "id,teacher_id,title,description,type,total_duration_min,reserve_amount,price_per_min,tags,thumbnail_url,status,video_urls"
         )
-        .eq("status", "published")
+        # .eq("status", "published")
         .limit(50)
         .execute()
         .data
@@ -136,21 +136,19 @@ def _teacher_names_and_ratings_for_listings(
     return teacher_name_by_id, rating_by_listing
 
 
-@router.get("/listings", response_model=list[ListingPublic])
+@router.get("/listings", response_model=list[dict])
 def list_listings(
     limit: int = Query(20, ge=1, le=100),
     tag: str | None = None,
-) -> list[ListingPublic]:
+) -> list[dict]:
     """
     Listings catalog with teacher name, thumbnail_url, and average rating.
     """
     sb = get_supabase()
     q = (
         sb.client.table("listings")
-        .select(
-            "id,teacher_id,title,description,type,total_duration_min,reserve_amount,price_per_min,tags,thumbnail_url,status,video_urls"
-        )
-        .eq("status", "published")
+        .select("*")
+        # .eq("status", "published")  # Allow all statuses for demo/dev
         .limit(limit)
     )
     if tag:
@@ -161,7 +159,8 @@ def list_listings(
     for r in rows:
         r["teacher_name"] = teacher_names.get(r["teacher_id"]) or ""
         r["reviews_rating"] = ratings.get(r["id"])
-        out.append(ListingPublic(**r))
+        out.append(r)
+        # out.append(ListingPublic(**r))
     return out
 
 
@@ -211,9 +210,17 @@ def get_course_detail(listing_id: str) -> CourseDetailResponse:
         # Extract path from URL if it's a Supabase URL, otherwise use as-is
         try:
             # Try to extract path and generate signed URL
-            # For now, we'll return public URLs; frontend can request signed URLs separately if needed
-            video_urls_signed.append(url)
-        except Exception:
+            path = url
+            if "supabase.co/storage/v1/object/public/videos/" in url:
+                path = url.split("/videos/")[-1]
+            elif "supabase.co/storage/v1/object/sign/videos/" in url:
+                 path = url.split("/videos/")[-1].split("?")[0]
+            
+            # Generate signed URL (valid for 1 hour)
+            signed = sb.get_signed_url(path=path, expires_in=3600)
+            video_urls_signed.append(signed)
+        except Exception as e:
+            print(f"Error generating signed URL for {url}: {e}")
             video_urls_signed.append(url)
 
     # Return single URL if one video, array if multiple

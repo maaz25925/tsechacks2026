@@ -19,7 +19,7 @@ export default function CreatorUpload() {
     videoFile: null,
     thumbnail: null,
     baseCoursePrice: '',
-    visibility: 'draft',
+    visibility: 'public',
     termsAccepted: false,
     additionalResources: [],
   });

@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ReactPlayer from 'react-player';
 import { AlertCircle } from 'lucide-react';
 import { mockSessions } from '../lib/dataMocks';
@@ -105,6 +105,10 @@ export default function ActiveSession() {
           width="100%"
           height="100%"
           onProgress={(state) => setVideoProgress(state.played * 100)}
+          onError={(e) => {
+            console.error("Video playback error:", e);
+            alert("Error playing video. The file might not exist or access is denied.");
+          }}
         />
       </div>
 
