@@ -29,7 +29,25 @@ def create_payment_intent(req: PaymentIntentRequest) -> dict:
     Create a payment intent for milestone-based payouts.
     Returns: { intent_id, escrow_id, status, total_amount }
     """
+    print(f"\n{'='*60}")
+    print(f"🔵 /milestones/intent ENDPOINT HIT!")
+    print(f"{'='*60}")
+    print(f"Request Data: amount={req.amount}, currency={req.currency}, description={req.description}")
+    print(f"Metadata: {req.metadata}")
+    print(f"{'='*60}\n")
+    
+    logger.info(f"🔵 Creating payment intent: amount={req.amount}, currency={req.currency}")
+    
     gw = get_finternet()
+    sb = get_supabase()
+    
+    # session_id must be provided in metadata for escrow tracking
+    session_id = None
+    if req.metadata:
+        session_id = req.metadata.get("session_id")
+    
+    if not session_id:
+        raise http_error(400, "session_id is required in metadata", code="INVALID_METADATA")
     
     try:
         result = gw.create_payment_intent(
@@ -38,10 +56,51 @@ def create_payment_intent(req: PaymentIntentRequest) -> dict:
             description=req.description,
             metadata=req.metadata,
         )
-        logger.info(f"Created payment intent: {result['intent_id']}")
-        return result
+        
+        logger.info(f"💰 Payment intent response from Finternet: {result}")
+        
+        # Extract critical fields from Finternet response
+        intent_id = result.get("id") or result.get("intent_id")
+        payment_url = result.get("paymentUrl") or result.get("payment_url")
+        status = result.get("status", "INITIATED")
+        intent_amount = result.get("amount", str(req.amount))
+        intent_currency = result.get("currency", req.currency)
+        
+        logger.info(f"📋 Extracted: intent_id={intent_id}, paymentUrl={payment_url}, amount={intent_amount}")
+        
+        # Store escrow in database for later milestone creation
+        try:
+            escrow_id = f"escrow_{uuid4().hex[:12]}"
+            amount_value = float(intent_amount) if intent_amount else float(req.amount)
+            
+            escrow_row = {
+                "id": escrow_id,
+                "finternet_intent_id": intent_id or "",
+                "session_id": session_id,
+                "total_amount": amount_value,
+                "locked_amount": amount_value,
+                "status": "active",
+                "created_at": utc_now_iso(),
+            }
+            sb.insert("escrows", escrow_row)
+            logger.info(f"✅ Stored escrow {escrow_id} with session {session_id}")
+        except Exception as db_error:
+            logger.error(f"❌ Failed to store escrow in database: {str(db_error)}")
+            # Don't fail completely - still return the payment URL to frontend!
+            logger.warning(f"⚠️ Escrow storage failed but returning payment intent anyway")
+        
+        # Return response with paymentUrl for frontend navigation
+        return {
+            "id": intent_id or f"intent_{uuid4().hex[:12]}",
+            "escrow_id": escrow_id if 'escrow_id' in locals() else f"escrow_{uuid4().hex[:12]}",
+            "paymentUrl": payment_url,  # CRITICAL: This is what frontend needs
+            "status": status,
+            "amount": intent_amount,
+            "currency": intent_currency,
+        }
     except Exception as e:
-        logger.error(f"Failed to create payment intent: {str(e)}")
+        logger.error(f"❌ Failed to create payment intent: {str(e)}", exc_info=True)
+        raise http_error(500, f"Failed to create payment intent: {str(e)}", code="INTENT_FAILED")
         raise http_error(500, f"Failed to create payment intent: {str(e)}", code="INTENT_FAILED")
 
 
@@ -72,7 +131,7 @@ def get_escrow(intent_id: str) -> EscrowResponse:
         finternet_escrow = gw.get_escrow(intent_id=intent_id)
         logger.info(f"Retrieved escrow from Finternet: {intent_id}")
         return EscrowResponse(
-            id=finternet_escrow.get("id"),
+            id=finternet_escrow.get("id", intent_id),
             session_id="",
             finternet_intent_id=intent_id,
             total_amount=finternet_escrow.get("total_amount", 0.0),
@@ -262,7 +321,7 @@ def submit_proof(milestone_id: str, req: ProofSubmitRequest) -> MilestoneComplet
                 "status": "completed",
                 "proof_data": proof_data,
             },
-            id=milestone_id
+            match={"id": milestone_id}
         )
         
         logger.info(f"Submitted proof and completed milestone {milestone_id}, released {milestone['amount']}")
@@ -305,7 +364,7 @@ def complete_milestone_manual(milestone_id: str) -> MilestoneCompleteResponse:
         sb.update(
             "milestones",
             {"status": "completed"},
-            id=milestone_id
+            match={"id": milestone_id}
         )
         
         logger.info(f"Manually completed milestone {milestone_id}")

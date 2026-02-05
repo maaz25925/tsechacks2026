@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 from fastapi import APIRouter
 
 from app.errors import http_error
 from app.supabase_client import get_supabase
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
