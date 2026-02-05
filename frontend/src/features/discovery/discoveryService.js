@@ -9,6 +9,15 @@ const api = axios.create({
     },
 });
 
+// Add auth token if available
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
 export const discoveryService = {
     // Fetch lists of public listings (for Home/Feed)
     async getListings({ limit = 50, tag } = {}) {
