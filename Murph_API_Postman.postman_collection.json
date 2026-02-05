@@ -1,0 +1,726 @@
+{
+  "info": {
+    "name": "Murph Backend API",
+    "description": "Complete API collection for TSEC CodeCell Murph platform with session, payment, and milestone endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student@example.com\",\n  \"password\": \"password123\",\n  \"name\": \"John Student\",\n  \"role\": \"student\",\n  \"bio\": \"Learning new skills\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "Start Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"user_1\",\n  \"listing_id\": \"session1\",\n  \"reserve_amount\": 45.00\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/sessions/start",
+              "host": ["{{BASE_URL}}"],
+              "path": ["sessions", "start"]
+            },
+            "description": "Start a new session and lock funds for payment"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"student_id\": \"user_1\",\n  \"listing_id\": \"session1\"\n}"
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/sessions/start",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["sessions", "start"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"session_id\": \"sess_a1b2c3d4e5f6\",\n  \"status\": \"active\",\n  \"reserve_amount\": 45.00,\n  \"transaction_id\": \"tx_abc123def456\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "End Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"sess_a1b2c3d4e5f6\",\n  \"completion_percentage\": 95,\n  \"engagement_metrics\": {\n    \"videoProgress\": 95,\n    \"elapsedTime\": 5400,\n    \"timestamp\": \"2024-02-05T11:45:00Z\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/sessions/end",
+              "host": ["{{BASE_URL}}"],
+              "path": ["sessions", "end"]
+            },
+            "description": "End an active session and calculate final charges"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"session_id\": \"sess_a1b2c3d4e5f6\",\n  \"completion_percentage\": 95\n}"
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/sessions/end",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["sessions", "end"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"session_id\": \"sess_a1b2c3d4e5f6\",\n  \"listing_id\": \"session1\",\n  \"teacher_id\": \"user_2\",\n  \"student_id\": \"user_1\",\n  \"start_time\": \"2024-02-05T10:30:00Z\",\n  \"end_time\": \"2024-02-05T11:45:00Z\",\n  \"duration_min\": 75.5,\n  \"completion_percentage\": 95,\n  \"reserve_amount\": 45.00,\n  \"final_amount_charged\": 37.50,\n  \"refund_amount\": 7.50,\n  \"settle_transaction_id\": \"tx_settle123\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Session Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/sessions/sess_a1b2c3d4e5f6",
+              "host": ["{{BASE_URL}}"],
+              "path": ["sessions", "sess_a1b2c3d4e5f6"]
+            },
+            "description": "Get details of a specific session"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Student Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/sessions/student/user_1",
+              "host": ["{{BASE_URL}}"],
+              "path": ["sessions", "student", "user_1"]
+            },
+            "description": "Get all sessions for a student"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Teacher Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/sessions/teacher/user_2",
+              "host": ["{{BASE_URL}}"],
+              "path": ["sessions", "teacher", "user_2"]
+            },
+            "description": "Get all sessions for a teacher"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Session Videos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/sessions/sess_a1b2c3d4e5f6/videos",
+              "host": ["{{BASE_URL}}"],
+              "path": ["sessions", "sess_a1b2c3d4e5f6", "videos"]
+            },
+            "description": "Get video URLs for an active session"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Get Session Payments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/payments/by_session?session_id=sess_a1b2c3d4e5f6",
+              "host": ["{{BASE_URL}}"],
+              "path": ["payments", "by_session"],
+              "query": [
+                {
+                  "key": "session_id",
+                  "value": "sess_a1b2c3d4e5f6"
+                }
+              ]
+            },
+            "description": "Get all payment records for a session"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/payments/by_session?session_id=sess_a1b2c3d4e5f6",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["payments", "by_session"],
+                  "query": [
+                    {
+                      "key": "session_id",
+                      "value": "sess_a1b2c3d4e5f6"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"session_id\": \"sess_a1b2c3d4e5f6\",\n  \"payments\": [\n    {\n      \"id\": \"pay_1\",\n      \"session_id\": \"sess_a1b2c3d4e5f6\",\n      \"type\": \"lock\",\n      \"amount\": 45.00,\n      \"status\": \"success\",\n      \"finternet_tx_id\": \"tx_abc123\",\n      \"created_at\": \"2024-02-05T10:30:00Z\"\n    },\n    {\n      \"id\": \"pay_2\",\n      \"session_id\": \"sess_a1b2c3d4e5f6\",\n      \"type\": \"settle\",\n      \"amount\": 37.50,\n      \"status\": \"success\",\n      \"finternet_tx_id\": \"tx_settle123\",\n      \"created_at\": \"2024-02-05T11:45:00Z\"\n    },\n    {\n      \"id\": \"pay_3\",\n      \"session_id\": \"sess_a1b2c3d4e5f6\",\n      \"type\": \"refund\",\n      \"amount\": 7.50,\n      \"status\": \"success\",\n      \"finternet_tx_id\": \"tx_refund123\",\n      \"created_at\": \"2024-02-05T11:45:30Z\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Milestones",
+      "item": [
+        {
+          "name": "Create Payment Intent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 45.00,\n  \"currency\": \"USD\",\n  \"description\": \"Payment for React Hooks Masterclass\",\n  \"metadata\": {\n    \"session_id\": \"sess_a1b2c3d4e5f6\",\n    \"student_id\": \"user_1\",\n    \"teacher_id\": \"user_2\",\n    \"listing_id\": \"session1\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/milestones/intent",
+              "host": ["{{BASE_URL}}"],
+              "path": ["milestones", "intent"]
+            },
+            "description": "Create a payment intent for milestone-based payouts"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 45.00,\n  \"currency\": \"USD\",\n  \"description\": \"Payment for session\"\n}"
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/milestones/intent",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["milestones", "intent"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"intent_id\": \"intent_xyz789\",\n  \"escrow_id\": \"escrow_abc123def456\",\n  \"status\": \"active\",\n  \"total_amount\": 45.00\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Escrow Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/milestones/escrow/intent_xyz789",
+              "host": ["{{BASE_URL}}"],
+              "path": ["milestones", "escrow", "intent_xyz789"]
+            },
+            "description": "Retrieve escrow details by intent ID (DB first, then Finternet)"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/milestones/escrow/intent_xyz789",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["milestones", "escrow", "intent_xyz789"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"id\": \"escrow_abc123\",\n  \"session_id\": \"sess_a1b2c3d4e5f6\",\n  \"finternet_intent_id\": \"intent_xyz789\",\n  \"total_amount\": 45.00,\n  \"locked_amount\": 45.00,\n  \"status\": \"active\",\n  \"created_at\": \"2024-02-05T10:30:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Milestone",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"escrow_id\": \"escrow_abc123\",\n  \"session_id\": \"sess_a1b2c3d4e5f6\",\n  \"index\": 0,\n  \"description\": \"Phase 1 - Introduction to React Hooks\",\n  \"amount\": 22.50,\n  \"percentage\": 50\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/milestones",
+              "host": ["{{BASE_URL}}"],
+              "path": ["milestones"]
+            },
+            "description": "Create a milestone tied to an escrow and session"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"escrow_id\": \"escrow_abc123\",\n  \"session_id\": \"sess_a1b2c3d4e5f6\",\n  \"index\": 0,\n  \"description\": \"Phase 1\",\n  \"amount\": 22.50,\n  \"percentage\": 50\n}"
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/milestones",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["milestones"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"id\": \"milestone_123\",\n  \"escrow_id\": \"escrow_abc123\",\n  \"session_id\": \"sess_a1b2c3d4e5f6\",\n  \"index\": 0,\n  \"description\": \"Phase 1 - Introduction to React Hooks\",\n  \"amount\": 22.50,\n  \"percentage\": 50,\n  \"status\": \"pending\",\n  \"proof_data\": null,\n  \"created_at\": \"2024-02-05T10:30:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Milestone Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/milestones/milestone_123",
+              "host": ["{{BASE_URL}}"],
+              "path": ["milestones", "milestone_123"]
+            },
+            "description": "Get details of a specific milestone"
+          },
+          "response": []
+        },
+        {
+          "name": "List Milestones by Session",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/milestones?session_id=sess_a1b2c3d4e5f6&limit=10&offset=0",
+              "host": ["{{BASE_URL}}"],
+              "path": ["milestones"],
+              "query": [
+                {
+                  "key": "session_id",
+                  "value": "sess_a1b2c3d4e5f6"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "List milestones filtered by session"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/milestones?session_id=sess_a1b2c3d4e5f6",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["milestones"],
+                  "query": [
+                    {
+                      "key": "session_id",
+                      "value": "sess_a1b2c3d4e5f6"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"milestones\": [\n    {\n      \"id\": \"milestone_123\",\n      \"escrow_id\": \"escrow_abc123\",\n      \"session_id\": \"sess_a1b2c3d4e5f6\",\n      \"index\": 0,\n      \"description\": \"Phase 1\",\n      \"amount\": 22.50,\n      \"percentage\": 50,\n      \"status\": \"pending\",\n      \"proof_data\": null,\n      \"created_at\": \"2024-02-05T10:30:00Z\"\n    },\n    {\n      \"id\": \"milestone_124\",\n      \"escrow_id\": \"escrow_abc123\",\n      \"session_id\": \"sess_a1b2c3d4e5f6\",\n      \"index\": 1,\n      \"description\": \"Phase 2\",\n      \"amount\": 22.50,\n      \"percentage\": 50,\n      \"status\": \"pending\",\n      \"proof_data\": null,\n      \"created_at\": \"2024-02-05T10:30:00Z\"\n    }\n  ],\n  \"total\": 2\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Milestones by Escrow",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/milestones?escrow_id=escrow_abc123&limit=10&offset=0",
+              "host": ["{{BASE_URL}}"],
+              "path": ["milestones"],
+              "query": [
+                {
+                  "key": "escrow_id",
+                  "value": "escrow_abc123"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "List milestones filtered by escrow"
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Milestone Proof",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"video_url\": \"https://example.com/watch/abc123\",\n  \"notes\": \"User completed 95% of content and passed the quiz\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/milestones/milestone_123/proof",
+              "host": ["{{BASE_URL}}"],
+              "path": ["milestones", "milestone_123", "proof"]
+            },
+            "description": "Submit proof for a milestone - auto-completes and releases funds to teacher"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"video_url\": \"https://example.com/watch/abc123\",\n  \"notes\": \"Completed\"\n}"
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/milestones/milestone_123/proof",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["milestones", "milestone_123", "proof"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"milestone_id\": \"milestone_123\",\n  \"status\": \"completed\",\n  \"amount_released\": 22.50,\n  \"finternet_tx_id\": \"tx_release123\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Complete Milestone (Manual)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/milestones/milestone_123/complete",
+              "host": ["{{BASE_URL}}"],
+              "path": ["milestones", "milestone_123", "complete"]
+            },
+            "description": "Manual completion fallback (rarely used, prefer /proof endpoint)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "item": [
+        {
+          "name": "Connect Wallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"wallet_address\": \"0x1234567890123456789012345678901234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/wallet/connect",
+              "host": ["{{BASE_URL}}"],
+              "path": ["wallet", "connect"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Wallet Balance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/wallet/balance",
+              "host": ["{{BASE_URL}}"],
+              "path": ["wallet", "balance"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health & Config",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{BASE_URL}}/health",
+              "host": ["{{BASE_URL}}"],
+              "path": ["health"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{BASE_URL}}/health",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"ok\": true,\n  \"service\": \"murph-backend\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Config",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{BASE_URL}}/config",
+              "host": ["{{BASE_URL}}"],
+              "path": ["config"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8000",
+      "type": "string",
+      "description": "Backend API base URL"
+    },
+    {
+      "key": "ACCESS_TOKEN",
+      "value": "",
+      "type": "string",
+      "description": "JWT access token from login response"
+    }
+  ]
+}

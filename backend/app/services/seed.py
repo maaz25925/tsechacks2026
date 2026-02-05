@@ -43,7 +43,7 @@ def seed_fake_data() -> None:
         "role": "student",
         "name": "Jamie Chen",
         "bio": "Trying new skills on a budget.",
-        "wallet_address": None,
+        "wallet_address": "0x1234567890abcdef1234567890abcdef12345678",
         "created_at": utc_now_iso(),
     }
 

@@ -8,6 +8,7 @@ import Discover from './pages/Discover.jsx';
 import SessionDetail from './pages/SessionDetail.jsx';
 import ActiveSession from './pages/ActiveSession.jsx';
 import Summary from './pages/Summary.jsx';
+import PaymentSuccess from './pages/PaymentSuccess.jsx';
 import Wallet from './pages/Wallet.jsx';
 import TeacherDashboard from './pages/TeacherDashboard.jsx';
 import CreatorUpload from './pages/CreatorUpload.jsx';
@@ -90,6 +91,11 @@ function AppContent() {
           <Route path="/summary/:sessionId" element={
             <ProtectedRoute>
               <Layout><Summary /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/payment-success" element={
+            <ProtectedRoute>
+              <PaymentSuccess />
             </ProtectedRoute>
           } />
           <Route path="/wallet" element={

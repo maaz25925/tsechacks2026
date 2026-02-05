@@ -18,26 +18,9 @@
 }
 
 /* When component mounts we add .entered to animate in */
-.hero-image.entered,
-.hero-video.entered {
+.hero-image.entered {
   /* Use a short keyframe so the entrance is noticeable for at least ~0.5s */
-  animation: heroEnter 560ms cubic-bezier(.22, .9, .35, 1) both;
-}
-
-.hero-video {
-  width: 100%;
-  height: auto;
-  max-height: 60vh;
-  object-fit: contain;
-  object-position: center;
-  border-radius: var(--card-radius);
-  margin-bottom: 2rem;
-  box-shadow: var(--card-shadow);
-  transform: translateY(8px) scale(0.98);
-  opacity: 0;
-  transition: opacity 220ms ease-out;
-  background: black;
-  /* Better for video */
+  animation: heroEnter 560ms cubic-bezier(.22,.9,.35,1) both;
 }
 
 @keyframes heroEnter {
@@ -45,12 +28,10 @@
     transform: translateY(12px) scale(0.98);
     opacity: 0;
   }
-
   60% {
     transform: translateY(-4px) scale(1.02);
     opacity: 1;
   }
-
   100% {
     transform: translateY(0) scale(1);
     opacity: 1;
@@ -209,7 +190,78 @@
 
 .start-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(59, 130, 246, 0.18);
+  box-shadow: 0 12px 28px rgba(59,130,246,0.18);
+}
+
+.start-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Alert Styles */
+.alert {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: var(--card-radius);
+  margin: 1.5rem 0;
+  border: 1px solid;
+  align-items: flex-start;
+}
+
+.alert svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.alert p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.alert-error {
+  background-color: #fef2f2;
+  border-color: #fee2e2;
+  color: #991b1b;
+}
+
+.alert-error svg {
+  color: #dc2626;
+}
+
+.alert-success {
+  background-color: #f0fdf4;
+  border-color: #dcfce7;
+  color: #166534;
+}
+
+.alert-success svg {
+  color: #16a34a;
+}
+
+.alert-info {
+  background-color: #f0f9ff;
+  border-color: #e0f2fe;
+  color: #0c4a6e;
+}
+
+.alert-info svg {
+  color: #0284c7;
+}
+
+.alert-error p,
+.alert-success p,
+.alert-info p {
+  color: inherit;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.text-sm {
+  font-size: 0.875rem;
 }
 
 @media (max-width: 768px) {

@@ -49,6 +49,11 @@ def create_app() -> FastAPI:
     def health() -> HealthResponse:
         return HealthResponse()
 
+    @app.post("/debug/echo")
+    def debug_echo(body: dict) -> dict:
+        """Debug endpoint to echo back what the client sends."""
+        return {"received": body}
+
     @app.get("/config")
     def config_public() -> dict:
         # Helpful during hackathon dev. Do not expose secrets.
