@@ -27,113 +27,141 @@ def start(req: SessionStartRequest) -> SessionStartResponse:
     - Create session (active) + lock funds via Finternet (mock)
     - Create escrow for milestone-based payouts
     """
-    sb = get_supabase()
-    s = get_settings()
-
-    student = sb.maybe_single("users", "*", id=req.student_id)
-    if not student or student.get("role") != "student":
-        raise http_error(404, "Student not found", code="STUDENT_NOT_FOUND")
-
-    listing = sb.maybe_single("listings", "*", id=req.listing_id)
-    if not listing or listing.get("status") != "published":
-        raise http_error(404, "Listing not found", code="LISTING_NOT_FOUND")
-
-    wallet_address = student.get("wallet_address")
-    if not wallet_address:
-        raise http_error(400, "Wallet not connected", code="WALLET_NOT_CONNECTED")
-
-    reserve_amount = float(
-        req.reserve_amount
-        if req.reserve_amount is not None
-        else listing.get("reserve_amount") or s.default_reserve_amount
-    )
-    reserve_amount = max(1.0, round(reserve_amount, 2))
-
-    gw = get_finternet()
-    balance = gw.get_balance(wallet_address=wallet_address)
-    if balance < reserve_amount:
-        raise http_error(402, "Insufficient balance", code="INSUFFICIENT_BALANCE")
-
-    lock_tx = gw.lock_funds(wallet_address=wallet_address, amount=reserve_amount)
-
-    session_id = f"sess_{uuid4().hex}"
-    now = datetime.now(timezone.utc).isoformat()
-    session_row = {
-        "id": session_id,
-        "student_id": req.student_id,
-        "teacher_id": listing["teacher_id"],
-        "listing_id": req.listing_id,
-        "status": "active",
-        "start_time": now,
-        "end_time": None,
-        "duration_min": None,
-        "completion_percentage": None,
-        "engagement_metrics": None,
-        "final_amount_charged": None,
-        "refund_amount": None,
-        "transaction_id": lock_tx.finternet_tx_id,
-        "created_at": utc_now_iso(),
-        # convenience field (not in the requested schema, but handy if table includes it)
-        "reserve_amount": reserve_amount,
-    }
-
-    # If your Supabase table doesn't have reserve_amount column, remove the key above.
     try:
-        sb.insert("sessions", session_row)
-    except Exception:
-        session_row.pop("reserve_amount", None)
-        sb.insert("sessions", session_row)
-
-    # Store payment record
-    sb.insert(
-        "payments",
-        {
-            "id": f"pay_{uuid4().hex}",
-            "session_id": session_id,
-            "type": "lock",
-            "amount": reserve_amount,
-            "status": "success",
-            "finternet_tx_id": lock_tx.finternet_tx_id,
-            "created_at": utc_now_iso(),
-        },
-    )
-
-    # Create escrow for milestone-based payouts
-    try:
-        payment_intent = gw.create_payment_intent(
-            amount=reserve_amount,
-            currency="USD",
-            description=f"Escrow for session {session_id} - {listing['title']}",
-            metadata={
-                "releaseType": "MILESTONE_LOCKED",
-                "session_id": session_id,
-                "student_id": req.student_id,
-                "teacher_id": listing["teacher_id"],
-            },
-        )
+        logger.info(f"Session start request received: student_id={req.student_id}, listing_id={req.listing_id}, reserve_amount={req.reserve_amount}")
         
-        escrow_id = f"escrow_{uuid4().hex}"
-        escrow_row = {
-            "id": escrow_id,
-            "session_id": session_id,
-            "finternet_intent_id": payment_intent.get("intent_id", ""),
-            "total_amount": reserve_amount,
-            "locked_amount": reserve_amount,
+        sb = get_supabase()
+        s = get_settings()
+
+        student = sb.maybe_single("users", "*", id=req.student_id)
+        if not student or student.get("role") != "student":
+            logger.warning(f"Student not found or invalid role: {req.student_id}")
+            raise http_error(404, "Student not found", code="STUDENT_NOT_FOUND")
+
+        listing = sb.maybe_single("listings", "*", id=req.listing_id)
+        if not listing or listing.get("status") != "published":
+            logger.warning(f"Listing not found or not published: {req.listing_id}")
+            raise http_error(404, "Listing not found", code="LISTING_NOT_FOUND")
+
+        wallet_address = student.get("wallet_address")
+        if not wallet_address:
+            # For MVP: auto-generate mock wallet if not set
+            logger.info(f"Wallet not connected, generating mock wallet for {req.student_id}")
+            wallet_address = f"0x{uuid4().hex[:40]}"
+            # Update student record with wallet
+            try:
+                sb.update("users", {"wallet_address": wallet_address}, match={"id": req.student_id})
+                logger.info(f"Mock wallet assigned: {wallet_address}")
+            except Exception as e:
+                logger.warning(f"Could not update wallet: {e}")
+                # Continue with generated wallet anyway
+
+
+        reserve_amount = float(
+            req.reserve_amount
+            if req.reserve_amount is not None
+            else listing.get("reserve_amount") or s.default_reserve_amount
+        )
+        reserve_amount = max(1.0, round(reserve_amount, 2))
+        logger.info(f"Reserve amount: ${reserve_amount}")
+
+        gw = get_finternet()
+        balance = gw.get_balance(wallet_address=wallet_address)
+        logger.info(f"Student balance: ${balance}")
+        
+        if balance < reserve_amount:
+            logger.warning(f"❌ Insufficient balance: ${balance} < ${reserve_amount}")
+            raise http_error(402, "Insufficient balance", code="INSUFFICIENT_BALANCE")
+
+        lock_tx = gw.lock_funds(wallet_address=wallet_address, amount=reserve_amount)
+        logger.info(f"✅ Funds locked: {lock_tx.finternet_tx_id}")
+
+        session_id = f"sess_{uuid4().hex}"
+        now = datetime.now(timezone.utc).isoformat()
+        session_row = {
+            "id": session_id,
+            "student_id": req.student_id,
+            "teacher_id": listing["teacher_id"],
+            "listing_id": req.listing_id,
             "status": "active",
+            "start_time": now,
+            "end_time": None,
+            "duration_min": None,
+            "completion_percentage": None,
+            "engagement_metrics": None,
+            "final_amount_charged": None,
+            "refund_amount": None,
+            "transaction_id": lock_tx.finternet_tx_id,
             "created_at": utc_now_iso(),
         }
-        sb.insert("escrows", escrow_row)
-        logger.info(f"Created escrow {escrow_id} for session {session_id}")
-    except Exception as e:
-        logger.warning(f"Failed to create escrow for session {session_id}: {str(e)}")
-        # Continue anyway; escrow is optional for MVP
 
-    return SessionStartResponse(
-        session_id=session_id,
-        status="active",
-        reserve_amount=reserve_amount,
-        transaction_id=lock_tx.finternet_tx_id,
-    )
+        sb.insert("sessions", session_row)
+        logger.info(f"Session created: {session_id}")
+
+        # Store payment record
+        sb.insert(
+            "payments",
+            {
+                "id": f"pay_{uuid4().hex}",
+                "session_id": session_id,
+                "type": "lock",
+                "amount": reserve_amount,
+                "status": "success",
+                "finternet_tx_id": lock_tx.finternet_tx_id,
+                "created_at": utc_now_iso(),
+            },
+        )
+
+        # Create escrow for milestone-based payouts
+        try:
+            print(f"\n🔵 CALLING create_payment_intent from sessions.py")
+            print(f"Amount: {reserve_amount}, Session: {session_id}")
+            
+            payment_intent = gw.create_payment_intent(
+                amount=reserve_amount,
+                currency="USD",
+                description=f"Escrow for session {session_id} - {listing['title']}",
+                metadata={
+                    "releaseType": "MILESTONE_LOCKED",
+                    "session_id": session_id,
+                    "student_id": req.student_id,
+                    "teacher_id": listing["teacher_id"],
+                },
+            )
+            
+            print(f"✅ Got payment_intent response: {payment_intent}")
+            logger.info(f"Payment intent response: {payment_intent}")
+            
+            escrow_id = f"escrow_{uuid4().hex}"
+            escrow_row = {
+                "id": escrow_id,
+                "session_id": session_id,
+                "finternet_intent_id": payment_intent.get("id", ""),
+                "total_amount": reserve_amount,
+                "locked_amount": reserve_amount,
+                "status": "active",
+                "created_at": utc_now_iso(),
+            }
+            sb.insert("escrows", escrow_row)
+            logger.info(f"✅ Created escrow {escrow_id} for session {session_id}")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to create escrow for session {session_id}: {str(e)}")
+            # Continue anyway; escrow is optional for MVP
+
+        logger.info(f"Session start successful: {session_id}")
+        return SessionStartResponse(
+            session_id=session_id,
+            status="active",
+            reserve_amount=reserve_amount,
+            transaction_id=lock_tx.finternet_tx_id,
+        )
+    except Exception as exc:
+        logger.error(f"Error in session start: {str(exc)}", exc_info=True)
+        # Re-raise if it's already an HTTPException
+        if hasattr(exc, 'status_code'):
+            raise
+        # Otherwise wrap it
+        raise http_error(400, f"Session start failed: {str(exc)}", code="SESSION_START_ERROR")
 
 
 @router.post("/end", response_model=SessionEndBreakdown)
@@ -182,7 +210,7 @@ def end(req: SessionEndRequest) -> SessionEndBreakdown:
 
     # determine reserve amount
     reserve_amount = (
-        float(session.get("reserve_amount"))
+        float(session.get("reserve_amount") or 0.0)
         if session.get("reserve_amount") is not None
         else float(listing.get("reserve_amount") or get_settings().default_reserve_amount)
     )

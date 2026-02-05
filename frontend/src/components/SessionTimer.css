@@ -77,3 +77,15 @@
 .end-btn:hover {
   background-color: #DC2626;
 }
+
+.pause-btn:disabled,
+.end-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pause-btn:disabled:hover,
+.end-btn:disabled:hover {
+  background-color: inherit;
+  transform: none;
+}
