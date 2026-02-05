@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { mockSessions, mockCategories } from '../lib/dataMocks';
+import { discoveryService } from '../features/discovery/discoveryService';
 import './Home.css';
 
 import { Search } from 'lucide-react';
@@ -44,16 +45,49 @@ export default function Home({ selectedCategory = 'All', searchQuery = '', onCat
     setActiveCategory(cat);
     if (onCategoryChange) onCategoryChange(cat);
   };
-  const sessions = useMemo(() => {
-    let filtered = [...mockSessions];
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    // DEV: Override first card with real listing ID for testing
-    if (filtered.length > 0) {
-      filtered[0] = {
-        ...filtered[0],
-        id: "listing_2e51bac18dc64cbeb3399c7b049a1e93"
-      };
-    }
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // Fetch real listings (fetch all/limit then filter client side for now to match category exactly)
+        const data = await discoveryService.getListings({ limit: 50 });
+
+        // Map backend data to UI format
+        const mapped = data.map(item => ({
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          thumbnail: item.thumbnail_url || PLACEHOLDER_SVG,
+          instructor: {
+            name: item.teacher_name || 'Instructor',
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (item.teacher_name || "Instructor")
+          },
+          duration: item.total_duration_min || 0,
+          pricePerMinute: item.price_per_min || 0,
+          rating: item.reviews_rating || 'New',
+          tags: item.tags ? Object.values(item.tags) : [],
+          category: item.category || (item.type === 'single_video' ? 'Video' : 'Course')
+        }));
+
+        setSessions(mapped);
+      } catch (err) {
+        console.error("Failed to fetch listings", err);
+        setError(err.message || "Failed to load listings");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchListings();
+  }, []); // Run once on mount
+
+  const filteredSessions = useMemo(() => {
+    let filtered = [...sessions];
 
     if (activeCategory && activeCategory !== 'All') {
       filtered = filtered.filter((s) => s.category === activeCategory);
@@ -69,7 +103,7 @@ export default function Home({ selectedCategory = 'All', searchQuery = '', onCat
     }
 
     return filtered;
-  }, [activeCategory, searchQuery]);
+  }, [sessions, activeCategory, searchQuery]);
 
   return (
     <div className="home-page">
@@ -105,7 +139,12 @@ export default function Home({ selectedCategory = 'All', searchQuery = '', onCat
         <Search size={18} />
       </button> */}
       <div className="sessions-grid">
-        {sessions.map((session) => (
+        {error && <div style={{ color: 'red', padding: '20px' }}>Error: {error}</div>}
+        {loading ? (
+          <div style={{ color: 'white', padding: '20px' }}>Loading listings...</div>
+        ) : filteredSessions.length === 0 ? (
+          <div style={{ color: '#888', padding: '20px' }}>No listings found. Try adjusting filters or search.</div>
+        ) : filteredSessions.map((session) => (
           <Link key={session.id} to={`/session/${session.id}`} className="session-link">
             <div className="session-card">
               <div className="card-thumbnail-wrapper">
