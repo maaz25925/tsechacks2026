@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Clock, DollarSign } from 'lucide-react';
 import './SessionTimer.css';
 
-export default function SessionTimer({ session, onEnd }) {
+export default function SessionTimer({ session, onEnd, isEnding = false, onTimeUpdate }) {
   const [elapsed, setElapsed] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const estimatedCost = (elapsed / 60) * session.pricePerMinute;
@@ -11,17 +11,30 @@ export default function SessionTimer({ session, onEnd }) {
     if (isPaused) return;
 
     const timer = setInterval(() => {
-      setElapsed((prev) => prev + 1);
+      setElapsed((prev) => {
+        const newElapsed = prev + 1;
+        // Notify parent component of time update
+        if (onTimeUpdate) {
+          onTimeUpdate(newElapsed);
+        }
+        return newElapsed;
+      });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isPaused]);
+  }, [isPaused, onTimeUpdate]);
 
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
 
   const formatTime = (m, s) => {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  const handleEndSession = async () => {
+    if (onEnd) {
+      await onEnd();
+    }
   };
 
   return (
@@ -43,11 +56,19 @@ export default function SessionTimer({ session, onEnd }) {
       </div>
 
       <div className="timer-controls">
-        <button onClick={() => setIsPaused(!isPaused)} className="pause-btn">
+        <button
+          onClick={() => setIsPaused(!isPaused)}
+          className="pause-btn"
+          disabled={isEnding}
+        >
           {isPaused ? 'Resume' : 'Pause'}
         </button>
-        <button onClick={() => onEnd()} className="end-btn">
-          End Session
+        <button
+          onClick={handleEndSession}
+          className="end-btn"
+          disabled={isEnding}
+        >
+          {isEnding ? 'Ending...' : 'End Session'}
         </button>
       </div>
     </div>

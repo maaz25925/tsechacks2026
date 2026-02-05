@@ -50,3 +50,23 @@
   color: #1e40af;
   margin: 0;
 }
+
+.error-banner {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  background-color: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 0.75rem;
+  color: #991b1b;
+}
+
+.error-banner svg {
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+.error-banner p {
+  margin: 0;
+}
